@@ -19,24 +19,22 @@ function corsHeaders() {
   };
 }
 
-const NOTIFY_EMAIL = "shahzainhtc@gmail.com";
-
-// Best-effort — a failed email must never fail the submission itself. The
+// A Telegram bot token is scoped to just this bot (not shared across every
+// other Cloudflare Worker the way ntfy.sh's anonymous public instance is —
+// that's what made ntfy unreliable here), so this doesn't hit any quota
+// caused by unrelated traffic.
+//
+// Best-effort — a failed push must never fail the submission itself. The
 // KV write above is the durable record; this is just a convenience ping,
 // so any error here is swallowed by the caller via ctx.waitUntil.
-async function sendNotificationEmail(env, reason, message) {
-  if (!env.RESEND_API_KEY) return;
-  await fetch("https://api.resend.com/emails", {
+async function sendNotificationPush(env, reason, message) {
+  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) return;
+  await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${env.RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      from: "Sanoja uninstall feedback <onboarding@resend.dev>",
-      to: NOTIFY_EMAIL,
-      subject: `Sanoja uninstall: ${reason}`,
-      text: message ? `${reason}\n\n${message}` : reason,
+      chat_id: env.TELEGRAM_CHAT_ID,
+      text: `Sanoja uninstall: ${reason}${message ? `\n\n${message}` : ""}`,
     }),
   });
 }
@@ -63,7 +61,7 @@ async function handleSubmit(request, env, ctx) {
   );
 
   ctx.waitUntil(
-    sendNotificationEmail(env, reason, message).catch(() => {
+    sendNotificationPush(env, reason, message).catch(() => {
       // Nothing to do — the submission is already saved in KV regardless.
     })
   );

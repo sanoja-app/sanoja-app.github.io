@@ -12,18 +12,33 @@ https://sanoja-uninstall-feedback.shahzainhtc.workers.dev/?token=<ADMIN_TOKEN>
 ```
 Returns JSON, newest first.
 
-## Email notifications (optional)
+## Push notifications (optional, via Telegram)
 
-Without this, feedback only shows up when you visit the URL above. To get an
-email the moment someone submits:
+Without this, feedback only shows up when you visit the URL above.
 
-1. Sign up free at [resend.com](https://resend.com) and grab an API key
-   from the dashboard (no domain verification needed — this sends from
-   Resend's own shared address, only to your own inbox).
-2. Set it as a secret:
+Tried ntfy.sh first — no signup needed, but its free public instance shares
+a daily message quota across every anonymous user on the same IP, and
+Cloudflare Workers all share a rotating pool of egress IPs across every
+customer's Workers. So the quota gets exhausted by completely unrelated
+traffic, not anything you did — unreliable from inside a Worker specifically.
+
+Telegram doesn't have that problem (a bot token isn't shared with anyone
+else's traffic) and setup is still just a chat, no website signup:
+
+1. In Telegram, message **@BotFather**, send `/newbot`, give it any name
+   and a username ending in `bot`.
+2. It replies with a token like `123456789:ABC-DEF1234ghIkl-zyx57W2v1u123ew11`.
+3. Send your new bot any message (e.g. "hi") — required so it's allowed to
+   message you back.
+4. Find your chat ID:
    ```bash
-   npx wrangler secret put RESEND_API_KEY
+   curl -s "https://api.telegram.org/bot<TOKEN>/getUpdates"
    ```
-3. That's it — `worker.js` already checks for `env.RESEND_API_KEY` and
-   sends to `shahzainhtc@gmail.com` on every submission if it's set. No
-   key set means no email attempt, submissions still save to KV either way.
+   Look for `"chat":{"id":...}` in the response.
+5. Set both as secrets:
+   ```bash
+   npx wrangler secret put TELEGRAM_BOT_TOKEN
+   npx wrangler secret put TELEGRAM_CHAT_ID
+   ```
+
+No key set means no push attempt — submissions still save to KV either way.
