@@ -166,17 +166,22 @@
         </div>
         <div class="actions">
           <button class="btn btn-primary" type="submit" id="un-submit" disabled>Send feedback</button>
-          <span class="note">Opens your email app to send it to us.</span>
+          <span class="note" id="un-note">Sent directly to us, no email needed.</span>
         </div>
       </form>
+      <p id="un-thanks" style="display:none; margin: 0; font-weight: 600;">Thanks — this really helps. 🙏</p>
     </div>
   </article>
 
   <script>
     (function () {
+      var ENDPOINT = 'https://sanoja-uninstall-feedback.WORKERS_SUBDOMAIN.workers.dev';
       var selected = null;
       var reasonsWrap = document.getElementById('reasons');
       var submitBtn = document.getElementById('un-submit');
+      var note = document.getElementById('un-note');
+      var form = document.getElementById('uninstall-form');
+      var thanks = document.getElementById('un-thanks');
 
       reasonsWrap.addEventListener('click', function (e) {
         var btn = e.target.closest('.reason');
@@ -188,18 +193,26 @@
         submitBtn.disabled = false;
       });
 
-      document.getElementById('uninstall-form').addEventListener('submit', function (e) {
+      form.addEventListener('submit', function (e) {
         e.preventDefault();
         if (!selected) return;
         var message = document.getElementById('un-message').value.trim();
 
-        var body = 'Reason: ' + selected;
-        if (message) body += '\n\n' + message;
+        submitBtn.disabled = true;
+        note.textContent = 'Sending...';
 
-        var mailto = 'mailto:shahzainhtc@gmail.com'
-          + '?subject=' + encodeURIComponent('Sanoja uninstall feedback')
-          + '&body=' + encodeURIComponent(body);
-        window.location.href = mailto;
+        fetch(ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason: selected, message: message })
+        }).then(function (res) {
+          if (!res.ok) throw new Error('request failed');
+          form.style.display = 'none';
+          thanks.style.display = 'block';
+        }).catch(function () {
+          note.textContent = "Couldn't send — try again, or email shahzainhtc@gmail.com directly.";
+          submitBtn.disabled = false;
+        });
       });
     })();
   </script>

@@ -1,0 +1,7 @@
+name = "sanoja-uninstall-feedback"
+main = "worker.js"
+compatibility_date = "2026-09-06"
+
+[[kv_namespaces]]
+binding = "FEEDBACK"
+id = "8ff90647222c40f1ae7f20cea83a22e7"

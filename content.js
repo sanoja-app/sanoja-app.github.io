@@ -363,7 +363,7 @@
     });
   }
 
-  function saveWord(finnish, english, context) {
+  function saveWord(finnish, english, context, contextTranslation) {
     const key = finnish.trim().toLowerCase();
     if (!key) return;
     chrome.storage.local.get({ sanojaWords: {} }, ({ sanojaWords }) => {
@@ -384,6 +384,9 @@
         // since "why did I save this" is about the original moment, not
         // whichever page happened to trigger the most recent lookup.
         context: existing && existing.context ? existing.context : context || "",
+        // Its English translation, captured alongside it at the same time —
+        // kept in step with context above, not touched on later re-saves.
+        contextTranslation: existing && existing.contextTranslation ? existing.contextTranslation : contextTranslation || "",
       };
       chrome.storage.local.set({ sanojaWords });
     });
@@ -393,6 +396,12 @@
   // giant unbroken block (a whole <article>, a wall-of-text <div>) doesn't
   // turn "context" into "the entire page".
   const MAX_CONTEXT_CHARS = 240;
+
+  // Wikipedia (and sites like it) inline citation markers — "[1]", "[b]",
+  // "[citation needed]" — right into the running text next to whatever word
+  // they're footnoting. They're reference plumbing, not part of the
+  // sentence, so a captured example sentence shouldn't carry them.
+  const FOOTNOTE_MARKER = /\[\s*(?:\d{1,3}|[a-z]|citation needed|note \d+)\s*\]/gi;
 
   // Finds the sentence the current selection sits inside, by walking up to
   // a block-level ancestor and splitting its text on sentence punctuation.
@@ -413,7 +422,10 @@
       el = el.parentElement;
     }
 
-    const blockText = (el.innerText || el.textContent || "").replace(/\s+/g, " ").trim();
+    const blockText = (el.innerText || el.textContent || "")
+      .replace(FOOTNOTE_MARKER, "")
+      .replace(/\s+/g, " ")
+      .trim();
     if (!blockText) return "";
 
     const selectedText = selection.toString().trim().toLowerCase();
@@ -471,7 +483,23 @@
       // Also validate the cleaned versions to ensure the translation didn't
       // introduce unwanted content.
       if (!untranslated && isSingleWord(text) && isSingleWord(finnishText) && isSingleWord(englishText)) {
-        saveWord(finnishText, englishText, context);
+        // Context is only ever in Finnish when translatedLangCode is "en" —
+        // that's the branch where the *original* selection (and so the page
+        // text around it) was Finnish. The reverse case (an English page,
+        // looking up a word into Finnish) leaves context already in English,
+        // where a learner doesn't need it translated.
+        let contextTranslation = "";
+        if (context && result.translatedLangCode === "en") {
+          try {
+            const contextResult = await callTranslateApi(context, "en", "fi");
+            // Not stripEdgePunctuation — that's for single words, and would
+            // eat the sentence's own trailing period.
+            contextTranslation = (contextResult.translatedText || "").trim();
+          } catch {
+            // Best-effort — the word itself still saves fine without this.
+          }
+        }
+        saveWord(finnishText, englishText, context, contextTranslation);
         maybeShowSaveHint(popupEl);
       }
 

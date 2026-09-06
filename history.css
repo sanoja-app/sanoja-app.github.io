@@ -185,15 +185,6 @@ header h1 {
   font-size: 13px;
 }
 
-#sortBy {
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--gridline);
-  background: var(--surface);
-  color: var(--text-primary);
-  font-size: 13px;
-}
-
 .icon-btn {
   display: flex;
   align-items: center;
@@ -342,6 +333,25 @@ header h1 {
   background: var(--row-hover);
 }
 
+.list-view th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.list-view th.sortable:hover {
+  color: var(--text-primary);
+}
+
+.list-view th.sortable.sorted {
+  color: var(--accent);
+}
+
+.sort-arrow {
+  margin-left: 3px;
+  font-size: 9px;
+  display: inline-block;
+}
+
 .list-view td.finnish {
   font-weight: 600;
 }
@@ -407,6 +417,10 @@ header h1 {
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
   z-index: 1000;
   pointer-events: none;
+  /* The word-list context tip packs the Finnish sentence and its English
+     translation into one string separated by "\n" — pre-line is what makes
+     that render as two lines instead of running together as one. */
+  white-space: pre-line;
 }
 
 .info-tip-bubble.visible {
@@ -957,6 +971,16 @@ header h1 {
   border-top: 1px dashed var(--gridline);
   transform-origin: top center;
   animation: flashReveal 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* The English word is the actual answer; this is just the sentence above
+   translated, so it stays smaller and muted rather than competing with it. */
+.flash-context-translation {
+  margin: 8px auto 0;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text-muted);
+  max-width: 34ch;
 }
 
 /* Same motion drives the reveal/grade button row each card, so the whole

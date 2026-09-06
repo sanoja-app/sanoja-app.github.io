@@ -30,7 +30,6 @@ const wordsSection = document.getElementById("wordsSection");
 
 const searchEl = document.getElementById("search");
 const searchIcon = document.getElementById("searchIcon");
-const sortByEl = document.getElementById("sortBy");
 const subList = document.getElementById("subList");
 const subCloud = document.getElementById("subCloud");
 const moreBtn = document.getElementById("moreBtn");
@@ -70,6 +69,7 @@ const quizSpeakBtn = document.getElementById("quizSpeakBtn");
 const quizAnswerBlock = document.getElementById("quizAnswerBlock");
 const quizEnglish = document.getElementById("quizEnglish");
 const quizContext = document.getElementById("quizContext");
+const quizContextTranslation = document.getElementById("quizContextTranslation");
 const quizRevealRow = document.getElementById("quizRevealRow");
 const showAnswerBtn = document.getElementById("showAnswerBtn");
 const quizGradeRow = document.getElementById("quizGradeRow");
@@ -99,6 +99,13 @@ let listPage = 1;
 let quizQueue = [];
 let quizPracticeMode = false;
 let quizStats = { correct: 0, total: 0 };
+// quizStats above counts every grading event, retries included, which is
+// exactly what the in-round progress bar wants. The end screen wants
+// something else — how many of the actual words in this round you knew, and
+// out of how many — so a round of 20 reports out of 20 even after retries,
+// not out of however many grading events those retries added.
+let quizRoundSize = 0;
+let quizFirstTryCorrect = 0;
 // Which mode card is picked on the intro screen — "due" or "free" — before
 // Start is pressed. Reselected to a sensible default each time the intro
 // re-renders, but a manual pick during that same visit sticks.
@@ -206,7 +213,12 @@ populateIcons();
 
 // ---------- Data ----------
 
-function loadWords() {
+// Same pattern as content.js's FOOTNOTE_MARKER — kept as its own copy here
+// since this file and the content script don't share a module system, only
+// used to clean up sentences captured before that filter existed.
+const FOOTNOTE_MARKER = /\[\s*(?:\d{1,3}|[a-z]|citation needed|note \d+)\s*\]/gi;
+
+function loadWords(opts) {
   chrome.storage.local.get({ sanojaWords: {} }, ({ sanojaWords }) => {
     let needsMigration = false;
     Object.values(sanojaWords).forEach((w) => {
@@ -218,15 +230,53 @@ function loadWords() {
         w.nextReview = w.firstSeen || new Date().toISOString();
         needsMigration = true;
       }
+      if (w.context) {
+        // .replace() with a global regex resets its own lastIndex per call,
+        // so this is safe across the whole loop — it's only .test()/.exec()
+        // on a global regex that carry state between calls and would need
+        // resetting here.
+        const cleaned = w.context.replace(FOOTNOTE_MARKER, "").replace(/\s+/g, " ").trim();
+        if (cleaned !== w.context) {
+          w.context = cleaned;
+          needsMigration = true;
+        }
+      }
     });
     allWords = Object.entries(sanojaWords).map(([key, v]) => ({ key, ...v }));
 
     if (needsMigration) {
       chrome.storage.local.set({ sanojaWords });
     }
-    render();
+    render(opts);
   });
 }
+
+// Each field's own "forward" order — the direction you get the first time
+// you pick it, before any toggle. Reused by both the dropdown and the
+// clickable column headers, so the two stay in sync.
+const SORT_COMPARATORS = {
+  count: (a, b) => b.count - a.count, // most frequent first
+  az: (a, b) => a.finnish.localeCompare(b.finnish),
+  stage: (a, b) => (a.box || 1) - (b.box || 1), // weakest first
+  lastSeen: (a, b) => new Date(b.lastSeen) - new Date(a.lastSeen), // most recent first
+};
+
+// A tie on the chosen field (e.g. two words both at Stage 1) would otherwise
+// fall back to whatever order they happened to already be in, which reads as
+// random. Each field gets a fixed second key instead, so re-sorting the same
+// list always lands the same way.
+const SORT_TIEBREAKS = {
+  count: SORT_COMPARATORS.lastSeen,
+  az: SORT_COMPARATORS.count,
+  stage: SORT_COMPARATORS.lastSeen,
+  lastSeen: SORT_COMPARATORS.count,
+};
+
+// The table headers are the only sort control — "lastSeen" (most recent
+// first) is just the implicit starting state, the one no header is drawn as
+// controlling until you click one.
+let sortField = "lastSeen";
+let sortDir = 1;
 
 function getFiltered() {
   const term = searchEl.value.trim().toLowerCase();
@@ -236,17 +286,10 @@ function getFiltered() {
       (w) => w.finnish.toLowerCase().includes(term) || w.english.toLowerCase().includes(term)
     );
   }
-  const sortBy = sortByEl.value;
+  const compare = SORT_COMPARATORS[sortField] || SORT_COMPARATORS.lastSeen;
+  const tiebreak = SORT_TIEBREAKS[sortField] || SORT_TIEBREAKS.lastSeen;
   list = [...list];
-  if (sortBy === "count") {
-    list.sort((a, b) => b.count - a.count);
-  } else if (sortBy === "az") {
-    list.sort((a, b) => a.finnish.localeCompare(b.finnish));
-  } else if (sortBy === "stage") {
-    list.sort((a, b) => (a.box || 1) - (b.box || 1));
-  } else {
-    list.sort((a, b) => new Date(b.lastSeen) - new Date(a.lastSeen));
-  }
+  list.sort((a, b) => compare(a, b) * sortDir || tiebreak(a, b));
   return list;
 }
 
@@ -275,7 +318,7 @@ function formatDate(iso) {
 
 // ---------- Top-level render ----------
 
-function render() {
+function render(opts) {
   const masteredCount = getMasteredWords().length;
   chrome.storage.local.get({ sanojaStreak: null }, ({ sanojaStreak }) => {
     const streakBadge =
@@ -296,7 +339,10 @@ function render() {
 
   renderWordsSection();
   renderMasteredSection();
-  renderPracticeIntro();
+  // Skipped right after a round finishes — forcing the mode picker back up
+  // here would cut off the "Nice work!" screen finishQuiz() just showed,
+  // since this refresh is only meant to update due counts in the background.
+  if (!(opts && opts.skipPracticeIntro)) renderPracticeIntro();
 }
 
 function setSegment(segment) {
@@ -306,7 +352,21 @@ function setSegment(segment) {
   wordsSection.classList.toggle("active", segment === "words");
 }
 
+function renderSortIndicators() {
+  document.querySelectorAll("#listView th.sortable").forEach((th) => {
+    const arrow = th.querySelector(".sort-arrow");
+    if (th.dataset.sort === sortField) {
+      arrow.textContent = sortDir === 1 ? "▲" : "▼";
+      th.classList.add("sorted");
+    } else {
+      arrow.textContent = "";
+      th.classList.remove("sorted");
+    }
+  });
+}
+
 function renderWordsSection() {
+  renderSortIndicators();
   const filtered = getFiltered();
   const hasAny = allWords.length > 0;
   emptyState.hidden = hasAny;
@@ -408,7 +468,11 @@ function renderList(words) {
       const ctxTip = document.createElement("span");
       ctxTip.className = "context-tip";
       ctxTip.textContent = " ⓘ";
-      initTooltip(ctxTip, w.context);
+      // No recall exercise happening in this table — the English word is
+      // already sitting right there in the next column — so the translation
+      // can just show alongside the sentence instead of waiting on a reveal.
+      const tip = w.contextTranslation ? `${w.context}\n${w.contextTranslation}` : w.context;
+      initTooltip(ctxTip, tip);
       tdFi.appendChild(ctxTip);
     }
 
@@ -680,6 +744,8 @@ function startQuiz(dueOnly) {
   quizQueue = batch.map((w) => ({ ...w, requeued: false }));
   quizPracticeMode = !dueOnly;
   quizStats = { correct: 0, total: 0 };
+  quizRoundSize = batch.length;
+  quizFirstTryCorrect = 0;
 
   // The card itself carries the mode for the whole session — set once here
   // rather than per-card, since it can't change until the session restarts.
@@ -724,6 +790,14 @@ function showCard() {
   } else {
     quizContext.hidden = true;
   }
+  // Sits inside quizAnswerBlock, so it only becomes visible on reveal —
+  // same moment the English word does, never before.
+  if (card.contextTranslation) {
+    quizContextTranslation.textContent = `“${card.contextTranslation}”`;
+    quizContextTranslation.hidden = false;
+  } else {
+    quizContextTranslation.hidden = true;
+  }
   quizAnswerBlock.hidden = true;
   quizRevealRow.hidden = false;
   quizGradeRow.hidden = true;
@@ -738,8 +812,10 @@ function showCard() {
 function finishQuiz() {
   quizCard.hidden = true;
   quizDone.hidden = false;
-  const { correct, total } = quizStats;
-  const remaining = practicePoolSize - total;
+  // Words actually offered this round, not grading events — a retried miss
+  // must not grow this, or "more due" understates what's really left and a
+  // rough round can even hide the continue button early (see below).
+  const remaining = practicePoolSize - quizRoundSize;
   practiceMoreBtn.hidden = remaining <= 0;
   if (remaining > 0) {
     practiceMoreBtn.textContent = quizPracticeMode
@@ -755,24 +831,34 @@ function finishQuiz() {
     quizDoneHeadline.textContent = "Nice work!";
     quizDoneText.textContent =
       remaining > 0
-        ? `Done practicing ${total} of ${practicePoolSize} words.`
-        : `Done practicing ${total} word${total === 1 ? "" : "s"}.`;
+        ? `Done practicing ${quizRoundSize} of ${practicePoolSize} words.`
+        : `Done practicing ${quizRoundSize} word${quizRoundSize === 1 ? "" : "s"}.`;
   } else {
-    quizDoneIcon.className = "quiz-done-icon good";
-    quizDoneIcon.innerHTML = iconSvg("check", 22);
-    quizDoneHeadline.textContent = total > 0 && correct === total ? "Perfect round!" : "Nice work!";
+    // Graded on first-try accuracy, not total grading events — getting a
+    // card wrong then right on its one retry shouldn't read the same as
+    // getting it right immediately, and a rough round of misses-then-misses
+    // shouldn't inflate the denominator into something like "5/35".
+    const ratio = quizFirstTryCorrect / quizRoundSize;
+    const perfect = quizFirstTryCorrect === quizRoundSize;
+    // A below-half round gets an honest, encouraging nudge instead of the
+    // same "Nice work!" + green check as a strong one — those two shouldn't
+    // look identical, but the words to relearn were already requeued and
+    // rescheduled by updateSchedule() above, so this is tone only, not a
+    // second mechanism.
+    const rough = !perfect && ratio < 0.5;
+    quizDoneIcon.className = rough ? "quiz-done-icon" : "quiz-done-icon good";
+    quizDoneIcon.innerHTML = iconSvg(rough ? "shuffle" : "check", 22);
+    quizDoneHeadline.textContent = perfect ? "Perfect round!" : rough ? "Worth another pass" : "Nice work!";
     quizDoneText.textContent =
       remaining > 0
-        ? `${correct}/${total} correct — ${remaining} more due.`
-        : `Session complete — ${correct}/${total} correct.`;
-    if (total > 0) {
-      updateStreak((count) => {
-        quizDoneStreak.hidden = false;
-        quizDoneStreak.innerHTML = `${iconSvg("flame", 13)}${count} day streak`;
-      });
-    }
+        ? `${quizFirstTryCorrect}/${quizRoundSize} correct — ${remaining} more due.`
+        : `Session complete — ${quizFirstTryCorrect}/${quizRoundSize} correct.`;
+    updateStreak((count) => {
+      quizDoneStreak.hidden = false;
+      quizDoneStreak.innerHTML = `${iconSvg("flame", 13)}${count} day streak`;
+    });
   }
-  loadWords(); // refresh due counts / list in the background
+  loadWords({ skipPracticeIntro: true }); // refresh due counts / list in the background, without cutting off this screen
 }
 
 // Leaving mid-session loses nothing: only *graded* cards affect the
@@ -785,6 +871,10 @@ function exitQuiz() {
 
 function gradeCard(known) {
   const card = quizQueue[0];
+  // Captured before the requeue below can flip it, so a card only ever
+  // counts toward quizFirstTryCorrect for the attempt that actually
+  // determines whether it goes back in the queue.
+  const firstAttempt = !card.requeued;
   // The color wash names the grade just given, on the card itself; the
   // exit motion carries it away a beat later so the wash has time to read.
   flashCard.classList.add("card-exit", known ? "grade-good" : "grade-bad");
@@ -793,6 +883,7 @@ function gradeCard(known) {
     quizQueue.shift();
     quizStats.total += 1;
     if (known) quizStats.correct += 1;
+    if (firstAttempt && known) quizFirstTryCorrect += 1;
 
     if (!quizPracticeMode) {
       updateSchedule(card.key, known);
@@ -923,9 +1014,20 @@ searchEl.addEventListener("input", () => {
   listPage = 1; // a new search is a new list — start back at the top of it
   renderWordsSection();
 });
-sortByEl.addEventListener("change", () => {
-  listPage = 1;
-  renderWordsSection();
+// Click a header to sort by it; click the one you're already sorted by
+// again to flip direction instead of no-op'ing.
+document.querySelectorAll("#listView th.sortable").forEach((th) => {
+  th.addEventListener("click", () => {
+    const field = th.dataset.sort;
+    if (sortField === field) {
+      sortDir *= -1;
+    } else {
+      sortField = field;
+      sortDir = 1;
+    }
+    listPage = 1;
+    renderWordsSection();
+  });
 });
 
 segPractice.addEventListener("click", () => setSegment("practice"));
@@ -1003,8 +1105,11 @@ quizAutoSpeakBtn.addEventListener("click", () => {
   renderQuizAutoSpeakBtn();
 });
 quizAgainBtn.addEventListener("click", () => {
+  // Reset Practice back to its picker for next time, but land on Words now —
+  // the point of this button is seeing what just moved, not staying put.
   quizDone.hidden = true;
   renderPracticeIntro();
+  setSegment("words");
 });
 
 // Continue in whatever mode the session was actually in — a due-review
