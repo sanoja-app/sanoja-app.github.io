@@ -19,7 +19,29 @@ function corsHeaders() {
   };
 }
 
-async function handleSubmit(request, env) {
+const NOTIFY_EMAIL = "shahzainhtc@gmail.com";
+
+// Best-effort — a failed email must never fail the submission itself. The
+// KV write above is the durable record; this is just a convenience ping,
+// so any error here is swallowed by the caller via ctx.waitUntil.
+async function sendNotificationEmail(env, reason, message) {
+  if (!env.RESEND_API_KEY) return;
+  await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: "Sanoja uninstall feedback <onboarding@resend.dev>",
+      to: NOTIFY_EMAIL,
+      subject: `Sanoja uninstall: ${reason}`,
+      text: message ? `${reason}\n\n${message}` : reason,
+    }),
+  });
+}
+
+async function handleSubmit(request, env, ctx) {
   let body;
   try {
     body = await request.json();
@@ -38,6 +60,12 @@ async function handleSubmit(request, env) {
   await env.FEEDBACK.put(
     id,
     JSON.stringify({ reason, message, date: new Date().toISOString() })
+  );
+
+  ctx.waitUntil(
+    sendNotificationEmail(env, reason, message).catch(() => {
+      // Nothing to do — the submission is already saved in KV regardless.
+    })
   );
 
   return new Response(JSON.stringify({ ok: true }), {
@@ -66,12 +94,12 @@ async function handleList(request, env) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     if (request.method === "OPTIONS") {
       return new Response(null, { headers: corsHeaders() });
     }
     if (request.method === "POST") {
-      return handleSubmit(request, env);
+      return handleSubmit(request, env, ctx);
     }
     if (request.method === "GET") {
       return handleList(request, env);

@@ -1,33 +1,29 @@
-Deploy this once from your machine (I can't deploy Workers from here — only list/read them):
+Live at: `https://sanoja-uninstall-feedback.shahzainhtc.workers.dev`
 
+Redeploy after editing `worker.js`:
 ```bash
 cd uninstall-feedback-worker
-npx wrangler login
 npx wrangler deploy
 ```
 
-`wrangler login` opens a browser to authorize; `deploy` will print the live URL, something like:
-
+Read submissions anytime:
 ```
-https://sanoja-uninstall-feedback.<your-subdomain>.workers.dev
-```
-
-Then:
-
-1. Set the admin token so you can read submissions later:
-   ```bash
-   npx wrangler secret put ADMIN_TOKEN
-   ```
-   (enter any password-like string when prompted)
-
-2. Open `docs/uninstall.html`, find the line:
-   ```js
-   var ENDPOINT = 'https://sanoja-uninstall-feedback.WORKERS_SUBDOMAIN.workers.dev';
-   ```
-   and replace `WORKERS_SUBDOMAIN` with your actual subdomain from the deploy output. Commit and push.
-
-To read submissions later:
-```
-https://sanoja-uninstall-feedback.<your-subdomain>.workers.dev/?token=<the ADMIN_TOKEN you set>
+https://sanoja-uninstall-feedback.shahzainhtc.workers.dev/?token=<ADMIN_TOKEN>
 ```
 Returns JSON, newest first.
+
+## Email notifications (optional)
+
+Without this, feedback only shows up when you visit the URL above. To get an
+email the moment someone submits:
+
+1. Sign up free at [resend.com](https://resend.com) and grab an API key
+   from the dashboard (no domain verification needed — this sends from
+   Resend's own shared address, only to your own inbox).
+2. Set it as a secret:
+   ```bash
+   npx wrangler secret put RESEND_API_KEY
+   ```
+3. That's it — `worker.js` already checks for `env.RESEND_API_KEY` and
+   sends to `shahzainhtc@gmail.com` on every submission if it's set. No
+   key set means no email attempt, submissions still save to KV either way.
