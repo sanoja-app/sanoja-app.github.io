@@ -5,17 +5,17 @@ on any webpage. If it's English, you'll see it in Finnish; if it's Finnish,
 you'll see it in English — detected automatically, no language picker needed.
 Click the speaker icon to hear the Finnish word spoken aloud.
 
-**[Landing page & screenshots](https://sanoja-app.github.io/sanoja-finnish-word-reader/)**
+**[Landing page & screenshots](https://sanoja-app.github.io/)**
 
 ## How to install (unpacked, for testing)
 
 1. Get the code onto your computer, permanently — Chrome loads the extension
    directly from these files, so don't delete the folder after installing:
    - **From GitHub**: click the green **Code** button on the
-     [repo page](https://github.com/sanoja-app/sanoja-finnish-word-reader) →
+     [repo page](https://github.com/sanoja-app/sanoja-app.github.io) →
      **Download ZIP** → unzip it. You'll get a folder like
-     `sanoja-finnish-word-reader-main`.
-   - **Or clone it**: `git clone https://github.com/sanoja-app/sanoja-finnish-word-reader.git`
+     `sanoja-app.github.io-main`.
+   - **Or clone it**: `git clone https://github.com/sanoja-app/sanoja-app.github.io.git`
 2. Open `chrome://extensions` in Chrome.
 3. Turn on **Developer mode** (top-right toggle).
 4. Click **Load unpacked** and select that folder — the same one that has

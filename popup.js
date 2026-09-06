@@ -26,7 +26,7 @@ reviewBtn.addEventListener("click", () => {
 
 feedbackLink.addEventListener("click", (e) => {
   e.preventDefault();
-  chrome.tabs.create({ url: "https://sanoja-app.github.io/sanoja-finnish-word-reader/feedback.html" });
+  chrome.tabs.create({ url: "https://sanoja-app.github.io/feedback.html" });
 });
 
 chrome.storage.local.get({ sanojaWords: {}, sanojaStreak: null }, ({ sanojaWords, sanojaStreak }) => {

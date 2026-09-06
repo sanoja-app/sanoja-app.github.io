@@ -10,7 +10,7 @@ You have git installed already (checked: git 2.34.1). No `gh` CLI, so
 we'll create the repo on github.com and push from Terminal.
 
 **Already done:** the repo is live at
-`https://github.com/sanoja-app/sanoja-finnish-word-reader`, under a free
+`https://github.com/sanoja-app/sanoja-app.github.io`, under a free
 GitHub Organization ("sanoja-app") rather than a personal username, so
 nothing in the URL identifies you personally. Commit authorship is set to
 "Sanoja" with a GitHub-provided noreply email, for the same reason.
@@ -25,12 +25,12 @@ git push
 ```
 
 Your privacy policy is live at:
-`https://sanoja-app.github.io/sanoja-finnish-word-reader/privacy.html`
+`https://sanoja-app.github.io/privacy.html`
 — a page on Sanoja's own website (styled to match, not just a raw GitHub
 markdown file). This is the URL to use for the Chrome Web Store
 submission below. (`PRIVACY.md` in the repo root is the source text that
 page is built from — GitHub also renders that on its own as a fallback,
-at `https://github.com/sanoja-app/sanoja-finnish-word-reader/blob/main/PRIVACY.md`.)
+at `https://github.com/sanoja-app/sanoja-app.github.io/blob/main/PRIVACY.md`.)
 
 ## 2. Publish to the Chrome Web Store
 

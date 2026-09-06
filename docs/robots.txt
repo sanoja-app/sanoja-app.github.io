@@ -1,6 +1,6 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://sanoja-app.github.io/sanoja-finnish-word-reader/sitemap.xml
+Sitemap: https://sanoja-app.github.io/sitemap.xml
 # https://llmstxt.org/ — plain-language summary for AI crawlers/answer engines
-# https://sanoja-app.github.io/sanoja-finnish-word-reader/llms.txt
+# https://sanoja-app.github.io/llms.txt

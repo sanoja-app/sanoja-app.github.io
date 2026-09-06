@@ -18,10 +18,10 @@ Key facts:
 
 ## Docs
 
-- [Landing page](https://sanoja-app.github.io/sanoja-finnish-word-reader/): overview, screenshots, FAQ.
-- [Privacy policy](https://sanoja-app.github.io/sanoja-finnish-word-reader/privacy.html): exactly what data the extension touches.
-- [Source code and README](https://github.com/sanoja-app/sanoja-finnish-word-reader): full technical documentation, install instructions, and feature list.
+- [Landing page](https://sanoja-app.github.io/): overview, screenshots, FAQ.
+- [Privacy policy](https://sanoja-app.github.io/privacy.html): exactly what data the extension touches.
+- [Source code and README](https://github.com/sanoja-app/sanoja-app.github.io): full technical documentation, install instructions, and feature list.
 
 ## Optional
 
-- [Feedback page](https://sanoja-app.github.io/sanoja-finnish-word-reader/feedback.html): how to report bugs or request features.
+- [Feedback page](https://sanoja-app.github.io/feedback.html): how to report bugs or request features.
