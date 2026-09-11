@@ -99,7 +99,7 @@
   <section class="doc-hero">
     <div class="wrap">
       <h1>Privacy Policy</h1>
-      <p class="updated">Last updated: August 2026</p>
+      <p class="updated">Last updated: September 2026</p>
     </div>
   </section>
 
@@ -115,19 +115,29 @@
       <li>When you select or double-click a word or short phrase on a
         webpage, that text is sent to Google's public translation service
         (<code>translate.googleapis.com</code>) to get a translation. This
-        is the only network request Sanoja makes, and it only happens when
-        you actively select text — Sanoja never reads or transmits a
-        page's content on its own.</li>
+        only happens when you actively select text — Sanoja never reads or
+        transmits a page's content on its own.</li>
       <li>Words you look up, along with your review schedule, quiz history,
         and streak, are saved using Chrome's local extension storage
         (<code>chrome.storage.local</code>) on your own computer. This data
-        is never uploaded to any server Sanoja controls — there isn't
-        one.</li>
+        is never uploaded anywhere unless you explicitly use "Practice on
+        phone" (see below).</li>
       <li>Your two toggle settings (enabled / speak automatically) are
         saved using <code>chrome.storage.sync</code>, which is Chrome's own
         built-in settings sync (the same mechanism used by e.g. your
         bookmarks, if you have Chrome sync turned on). This is handled
         entirely by Google's Chrome sync infrastructure, not by Sanoja.</li>
+      <li><strong>If you tap "Practice on phone"</strong> in the extension
+        popup, Sanoja sends your Finnish word, its English translation, and
+        whether you've marked it known to a small server Sanoja runs (a
+        Cloudflare Worker), so the QR code it shows can load them into the
+        <a href="flashcards.html">flashcard page</a> on your phone. This
+        only happens when you tap that button — it's never automatic. The
+        data is stored under a random, unguessable link tied to your
+        browser install, not to any account or identity, and is
+        automatically deleted 90 days after your last sync. No other
+        extension data (browsing history, quiz history, streak) is
+        included in this sync.</li>
     </ul>
 
     <h2>What Sanoja does not do</h2>
@@ -135,19 +145,21 @@
       <li>No analytics, tracking, or telemetry of any kind.</li>
       <li>No accounts, sign-in, or user identifiers.</li>
       <li>No advertising.</li>
-      <li>No data is sold, shared, or used for anything beyond showing you
-        a translation and saving your word list locally.</li>
+      <li>No data is sold or shared with anyone.</li>
       <li>No data collection beyond the word/phrase you explicitly select
-        for translation.</li>
+        for translation, and — only if you choose to use it — the word
+        list sent by "Practice on phone".</li>
     </ul>
 
     <h2>Third-party services</h2>
     <p>
-      The only third party involved is Google's translation endpoint, used
-      solely to translate the text you select. Its use is subject to
+      Google's translation endpoint is used solely to translate the text
+      you select, subject to
       <a href="https://policies.google.com/privacy">Google's own privacy
       policy</a>. Sanoja has no relationship with Google beyond calling
-      this public endpoint.
+      this public endpoint. The only other network service involved is the
+      Cloudflare Worker described above, which Sanoja itself operates,
+      used solely for the optional phone-sync feature.
     </p>
 
     <h2>Permissions</h2>
@@ -156,6 +168,11 @@
         locally, as described above.</li>
       <li><strong>Access to <code>translate.googleapis.com</code></strong>
         — to perform translations.</li>
+      <li><strong>Access to
+        <code>sanoja-uninstall-feedback.shahzainhtc.workers.dev</code></strong>
+        — used only when you tap "Practice on phone", to sync your word
+        list to the phone flashcard page, and (separately) to submit
+        optional feedback if you choose to uninstall the extension.</li>
       <li><strong>Content script on all pages</strong> — to detect when
         you select or double-click a word so a translation popup can
         appear. It only acts on text you've explicitly selected.</li>

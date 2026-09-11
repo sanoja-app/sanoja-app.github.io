@@ -50,7 +50,15 @@ history, and the two on/off settings, all locally on your device.
 
 **Host permission for translate.googleapis.com** — Used to send the exact
 text you select to Google's translation endpoint and get back a
-translation. This is the only network request the extension makes.
+translation.
+
+**Host permission for sanoja-uninstall-feedback.shahzainhtc.workers.dev** —
+Used only when the user taps "Practice on phone" in the popup, to sync
+their word list (Finnish word, English translation, known status) to a
+short-lived link so it can be loaded into a companion flashcard page on
+their phone; and separately, to submit optional feedback if the user
+chooses to fill out the uninstall survey. Both are opt-in and
+user-initiated — nothing is sent automatically.
 
 **Content script on all pages (`<all_urls>`)** — Needed so the
 select-a-word popup can appear on any webpage you're reading, since there's
