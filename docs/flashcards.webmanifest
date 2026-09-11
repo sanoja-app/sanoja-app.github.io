@@ -1,0 +1,12 @@
+{
+  "name": "Sanoja Flashcards",
+  "short_name": "Sanoja",
+  "start_url": "/flashcards.html",
+  "scope": "/flashcards.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2962ff",
+  "icons": [
+    { "src": "assets/icon128.png", "sizes": "128x128", "type": "image/png" }
+  ]
+}

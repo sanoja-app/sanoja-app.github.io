@@ -11,10 +11,14 @@ const ALLOWED_REASONS = new Set([
   "Other",
 ]);
 
-function corsHeaders() {
+const MAX_SYNC_BYTES = 300_000;
+const SYNC_TTL_SECONDS = 60 * 60 * 24 * 90; // 90 days
+const SYNC_ID_RE = /^[a-zA-Z0-9_-]{8,64}$/;
+
+function corsHeaders(origin) {
   return {
-    "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+    "Access-Control-Allow-Origin": origin || ALLOWED_ORIGIN,
+    "Access-Control-Allow-Methods": "POST, GET, PUT, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
   };
 }
@@ -72,6 +76,72 @@ async function handleSubmit(request, env, ctx) {
   });
 }
 
+// Sync lets the extension popup push a snapshot of the user's word list to a
+// persistent, unguessable ID, and the phone flashcard page pull it back down.
+// No accounts: the random ID itself is the only credential, same trust model
+// as the feedback endpoint's write access.
+function syncOrigin(request) {
+  const origin = request.headers.get("Origin");
+  // Extension popups fetch with an Origin of chrome-extension://<id>, which
+  // isn't CORS-checked by Chrome once host_permissions grants the host, but
+  // we still echo it back so the response isn't rejected in any context that
+  // does enforce CORS.
+  if (origin && (origin === ALLOWED_ORIGIN || origin.startsWith("chrome-extension://"))) {
+    return origin;
+  }
+  return ALLOWED_ORIGIN;
+}
+
+async function handleSyncPut(request, env, id) {
+  const origin = syncOrigin(request);
+  if (!SYNC_ID_RE.test(id)) {
+    return new Response("Invalid id", { status: 400, headers: corsHeaders(origin) });
+  }
+
+  const raw = await request.text();
+  if (raw.length > MAX_SYNC_BYTES) {
+    return new Response("Payload too large", { status: 413, headers: corsHeaders(origin) });
+  }
+
+  let words;
+  try {
+    words = JSON.parse(raw).words;
+  } catch {
+    return new Response("Invalid JSON", { status: 400, headers: corsHeaders(origin) });
+  }
+  if (!Array.isArray(words)) {
+    return new Response("Invalid payload", { status: 400, headers: corsHeaders(origin) });
+  }
+
+  await env.FEEDBACK.put(
+    `sync:${id}`,
+    JSON.stringify({ words, updatedAt: new Date().toISOString() }),
+    { expirationTtl: SYNC_TTL_SECONDS }
+  );
+
+  return new Response(JSON.stringify({ ok: true }), {
+    status: 200,
+    headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
+  });
+}
+
+async function handleSyncGet(request, env, id) {
+  const origin = syncOrigin(request);
+  if (!SYNC_ID_RE.test(id)) {
+    return new Response("Invalid id", { status: 400, headers: corsHeaders(origin) });
+  }
+
+  const stored = await env.FEEDBACK.get(`sync:${id}`);
+  if (!stored) {
+    return new Response("Not found", { status: 404, headers: corsHeaders(origin) });
+  }
+
+  return new Response(stored, {
+    status: 200,
+    headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
+  });
+}
+
 async function handleList(request, env) {
   const url = new URL(request.url);
   const token = url.searchParams.get("token");
@@ -93,8 +163,17 @@ async function handleList(request, env) {
 
 export default {
   async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    const syncMatch = url.pathname.match(/^\/sync\/([^/]+)$/);
+
     if (request.method === "OPTIONS") {
-      return new Response(null, { headers: corsHeaders() });
+      return new Response(null, { headers: corsHeaders(syncOrigin(request)) });
+    }
+    if (syncMatch && request.method === "PUT") {
+      return handleSyncPut(request, env, syncMatch[1]);
+    }
+    if (syncMatch && request.method === "GET") {
+      return handleSyncGet(request, env, syncMatch[1]);
     }
     if (request.method === "POST") {
       return handleSubmit(request, env, ctx);

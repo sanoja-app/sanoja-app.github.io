@@ -21,6 +21,7 @@ const ICONS = {
   check: '<polyline points="4,12.5 9,17.5 20,6"/>',
   flame: '<path d="M12 2.5c1 3-3 4-3 8a3 3 0 006 0c0-1-1-1.8-1-2.8 2 1 3.3 3 3.3 5.3a5.3 5.3 0 01-10.6 0c0-4.3 3.3-6.5 5.3-10.5z"/>',
   shuffle: '<polyline points="16,3 21,3 21,8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21,16 21,21 16,21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/>',
+  phone: '<rect x="7" y="2.5" width="10" height="19" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/>',
 };
 
 // Returns raw SVG markup (as an HTML string) for the given icon name, sized

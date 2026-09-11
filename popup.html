@@ -121,6 +121,46 @@
     .feedback-link:hover {
       color: #2962ff;
     }
+    button.secondary {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #d1d1d6;
+      background: white;
+      color: #1c1c1e;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    button.secondary:hover {
+      background: #f7f8fa;
+    }
+    #phonePanel {
+      margin-top: 12px;
+      text-align: center;
+    }
+    #phonePanel.hidden {
+      display: none;
+    }
+    #qrcode {
+      display: inline-block;
+      padding: 10px;
+      background: white;
+      border: 1px solid #e5e5ea;
+      border-radius: 10px;
+      line-height: 0;
+    }
+    #phoneStatus {
+      font-size: 11px;
+      color: #8e8e93;
+      line-height: 1.4;
+      margin: 8px 0 0;
+    }
   </style>
 </head>
 <body>
@@ -148,10 +188,17 @@
   <hr />
 
   <button class="primary" id="reviewWords"></button>
+  <button class="secondary" id="phoneBtn"></button>
+
+  <div id="phonePanel" class="hidden">
+    <div id="qrcode"></div>
+    <p id="phoneStatus">Scan with your phone camera, then add the page to your home screen.</p>
+  </div>
 
   <a class="feedback-link" id="feedbackLink" href="#">Send feedback</a>
 
   <script src="icons.js"></script>
+  <script src="qrcode.min.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
