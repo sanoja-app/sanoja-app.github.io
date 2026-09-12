@@ -9,6 +9,35 @@ const isDarkMode = window.matchMedia && window.matchMedia("(prefers-color-scheme
 const BOX_INTERVAL_DAYS = { 1: 1, 2: 3, 3: 7, 4: 14, 5: 30 };
 const MAX_BOX = 5;
 
+// TODO: fill in once the Chrome Web Store listing is approved — the review
+// deep-link is only valid after the item has a public store page.
+const CWS_REVIEW_URL = "https://chromewebstore.google.com/detail/REPLACE_WITH_ITEM_ID/reviews";
+// Shown once each, at these streak milestones — asked right after a genuine
+// accomplishment (not on first open, not repeatedly), which is when people
+// are most likely to actually leave a review instead of dismissing it.
+const RATE_NUDGE_MILESTONES = [3, 7, 14, 30];
+
+function maybeShowRateNudge(streakCount) {
+  if (!RATE_NUDGE_MILESTONES.includes(streakCount)) {
+    rateNudge.hidden = true;
+    return;
+  }
+  chrome.storage.local.get({ sanojaRateNudgeShown: [] }, ({ sanojaRateNudgeShown }) => {
+    if (sanojaRateNudgeShown.includes(streakCount)) {
+      rateNudge.hidden = true;
+      return;
+    }
+    rateNudge.hidden = false;
+    rateNudge.textContent = "Enjoying Sanoja? Leave a quick review →";
+    rateNudge.href = CWS_REVIEW_URL;
+    rateNudge.target = "_blank";
+    rateNudge.rel = "noopener";
+    chrome.storage.local.set({
+      sanojaRateNudgeShown: [...sanojaRateNudgeShown, streakCount],
+    });
+  });
+}
+
 function boxDescription(boxNum) {
   // "At least" rather than a fixed date — nothing pushes a reminder on that
   // day, it just becomes eligible again then. Someone who doesn't open the
@@ -81,6 +110,7 @@ const quizDoneIcon = document.getElementById("quizDoneIcon");
 const quizDoneHeadline = document.getElementById("quizDoneHeadline");
 const quizDoneText = document.getElementById("quizDoneText");
 const quizDoneStreak = document.getElementById("quizDoneStreak");
+const rateNudge = document.getElementById("rateNudge");
 const quizAgainBtn = document.getElementById("quizAgainBtn");
 const practiceMoreBtn = document.getElementById("practiceMoreBtn");
 
@@ -823,6 +853,7 @@ function finishQuiz() {
       : `Review ${Math.min(PRACTICE_BATCH_SIZE, remaining)} more`;
   }
   quizDoneStreak.hidden = true;
+  rateNudge.hidden = true;
   if (quizPracticeMode) {
     // Ungraded, so there's no score to celebrate — the accomplishment here
     // is just showing up, which "Nice work" says without inventing a metric.
@@ -856,6 +887,7 @@ function finishQuiz() {
     updateStreak((count) => {
       quizDoneStreak.hidden = false;
       quizDoneStreak.innerHTML = `${iconSvg("flame", 13)}${count} day streak`;
+      maybeShowRateNudge(count);
     });
   }
   loadWords({ skipPracticeIntro: true }); // refresh due counts / list in the background, without cutting off this screen

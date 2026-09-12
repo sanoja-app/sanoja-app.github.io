@@ -1080,3 +1080,15 @@ header h1 {
   font-size: 13px;
   margin: -8px 0 16px;
 }
+
+.rate-nudge {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  margin: -8px 0 16px;
+}
+.rate-nudge:hover {
+  text-decoration: underline;
+}

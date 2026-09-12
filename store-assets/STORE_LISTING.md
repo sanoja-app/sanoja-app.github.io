@@ -6,8 +6,8 @@ when you submit (chrome.google.com/webstore/devconsole).
 ## Extension name
 Sanoja - Finnish Translator & Dictionary
 
-## Summary (short description, 132 characters max — this one is 130)
-Finnish translator & dictionary: select any word on the web to translate English ↔ Finnish, hear it, and review with flashcards.
+## Summary (short description, 132 characters max — this one is 129)
+Learn Finnish: select any word on the web to translate English ↔ Finnish, hear it, and build vocabulary with flashcards.
 
 ## Category
 Education
@@ -17,8 +17,9 @@ English
 
 ## Detailed description
 
-Sanoja is a Finnish translator and dictionary that turns the pages you're
-already reading into Finnish vocabulary practice.
+Sanoja is a Finnish translator, dictionary, and vocabulary builder that
+turns the pages you're already reading into a language-learning tool — the
+fastest way to learn Finnish vocabulary while browsing normally.
 
 Select or double-click a word or short phrase on any webpage. If it's
 English, you'll see it in Finnish; if it's Finnish, you'll see it in
@@ -33,15 +34,19 @@ and moving on:
 - Get a word right consistently and it graduates to a "known words" section, separate from what you're still actively learning.
 - A word list and word-cloud view of everything you've saved, searchable and sortable.
 - A daily streak for finishing your reviews.
+- Tap "Practice on phone" and scan a QR code to keep building your Finnish vocabulary on the go — no app install needed.
 
-No accounts, no ads, no tracking. Your word list and progress are saved
-locally in your browser and never leave your computer — the only network
-request Sanoja makes is the translation lookup itself, and only for text
-you explicitly select. Full privacy policy:
-<PASTE YOUR PRIVACY POLICY URL HERE — see PUBLISHING.md>
+No accounts, no ads, no tracking. Your word list and progress stay in your
+browser and are never sent anywhere automatically — the only network
+requests Sanoja makes are the translation lookup itself (for text you
+explicitly select), and, only if you tap "Practice on phone," a copy of
+your word list sent to Sanoja's own server so your phone can load it. Full
+privacy policy: https://sanoja-app.github.io/privacy.html
 
 Built for one language pair on purpose: English and Finnish, both
-directions, nothing else.
+directions, nothing else. If you're learning Finnish vocabulary and want a
+dictionary, flashcard app, and vocabulary trainer that just works as you
+browse, this is it.
 
 ## Permission justifications (paste into the relevant CWS review fields)
 
