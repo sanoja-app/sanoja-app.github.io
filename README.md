@@ -67,6 +67,10 @@ Click the speaker icon to hear the Finnish word spoken aloud.
 - Search, sort, export, and delete all live in the Words view; less-common
   actions (Export CSV, Clean up sentences, Clear all) are tucked behind the
   "•••" menu instead of sitting on-screen permanently.
+- Tap "Practice on phone" in the toolbar popup and scan the QR code with your
+  phone's camera to pull your word list onto a phone-friendly flashcard page,
+  which you can add to your home screen and use offline afterward. See
+  "Practice on your phone" below.
 
 ## Features
 
@@ -74,6 +78,22 @@ Click the speaker icon to hear the Finnish word spoken aloud.
 - Get a word right consistently and it graduates to a "known words" section, separate from what you're still actively learning.
 - A word list and word-cloud view of everything you've saved, searchable and sortable.
 - A daily streak for finishing your reviews.
+- Practice on your phone via QR code — no app install needed.
+
+## Practice on your phone
+
+The toolbar popup has a "Practice on phone" button. Tapping it syncs a slim
+copy of your word list (Finnish word, English translation, known status —
+nothing else) to Sanoja's own server and shows a QR code. Scan it with your
+phone's camera to open a flashcard page at
+[sanoja-app.github.io/flashcards.html](https://sanoja-app.github.io/flashcards.html)
+pre-loaded with your words. Add it to your home screen (Share → Add to Home
+Screen on iOS, or the browser's install prompt on Android) for a full-screen
+app-like view. Once synced, it keeps working offline — re-open the popup and
+tap the button again any time you want to push newer words to it.
+
+This is the only thing in Sanoja that leaves your computer, and only happens
+when you explicitly tap that button — see [Privacy](#privacy) below.
 
 ## About the voice
 
@@ -118,12 +138,17 @@ something this build does.
   English or Finnish — no picker, no manual voice selection. Quality depends
   entirely on what's installed on your system; see "About the voice" above.
 - **Word log**: saved locally in the browser's extension storage on this
-  computer only — it doesn't sync to other devices or upload anywhere.
-- **Desktop only, for now**: this is a Chrome extension, and Chrome
-  extension APIs don't run in Chrome/Safari on iOS or in Chrome on Android
-  the same way — it works on desktop Chrome/Edge/Brave. A mobile version
-  would need a different approach (e.g. Kiwi Browser on Android supports
-  Chrome extensions, or this could be rebuilt differently for mobile).
+  computer only — it doesn't sync to other devices or upload anywhere,
+  unless you explicitly use "Practice on phone" (see above), which sends a
+  slim copy of your word list to Sanoja's own server so it can reach your
+  phone.
+- **The extension itself is desktop only**: this is a Chrome extension, and
+  Chrome extension APIs don't run in Chrome/Safari on iOS or in Chrome on
+  Android the same way — it works on desktop Chrome/Edge/Brave. There's no
+  mobile version of the lookup/quiz features themselves (Kiwi Browser on
+  Android supports Chrome extensions if you want to try it there). The
+  phone flashcard page (see "Practice on your phone" above) is a separate,
+  lighter companion view for on-the-go review, not the full extension.
 - If you haven't published this to the Chrome Web Store yet, this is a
   personal/unpacked install — if you want it on another computer, copy
   this folder over and repeat the install steps. See `PUBLISHING.md` for
@@ -137,8 +162,10 @@ languages. Direction is auto-detected from whatever text you select.
 ## Privacy
 
 See [`PRIVACY.md`](./PRIVACY.md) for exactly what data this extension
-touches (short version: your word list stays on your computer, and the
-only network request is the translation lookup itself).
+touches (short version: your word list stays on your computer, the
+translation lookup is the only automatic network request, and the only
+other network activity is the word list you explicitly send via "Practice
+on phone").
 
 ## License
 
