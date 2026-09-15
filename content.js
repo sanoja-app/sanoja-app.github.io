@@ -408,6 +408,23 @@
   // Falls back to the block's own text (capped) when no sentence boundary
   // contains the selection, which is common in short UI strings — button
   // labels, nav items, list bullets — that were never full sentences.
+  // How far into `el`'s text the selection starts, in the same normalized
+  // (whitespace-collapsed, footnote-stripped) coordinate space as blockText
+  // below — so it can be matched against a specific sentence's [start, end)
+  // range instead of just asking "does *a* sentence contain this word",
+  // which previously grabbed the *first* sentence containing the word even
+  // when the user had selected a later, repeated occurrence of it.
+  function selectionOffsetIn(el, range) {
+    try {
+      const preRange = range.cloneRange();
+      preRange.selectNodeContents(el);
+      preRange.setEnd(range.startContainer, range.startOffset);
+      return preRange.toString().replace(FOOTNOTE_MARKER, "").replace(/\s+/g, " ").length;
+    } catch {
+      return null;
+    }
+  }
+
   function getSelectionContext(selection) {
     if (!selection || selection.rangeCount === 0) return "";
     const range = selection.getRangeAt(0);
@@ -429,9 +446,24 @@
     if (!blockText) return "";
 
     const selectedText = selection.toString().trim().toLowerCase();
-    const sentences = blockText.match(/[^.!?]+[.!?]*/g) || [blockText];
-    const match = sentences.find((s) => s.toLowerCase().includes(selectedText));
-    let context = (match || blockText).trim();
+
+    // Sentences with their [start, end) offsets in blockText, so the one
+    // actually under the selection can be picked directly.
+    const sentenceRe = /[^.!?]+[.!?]*/g;
+    const sentences = [];
+    let m;
+    while ((m = sentenceRe.exec(blockText))) {
+      sentences.push({ text: m[0], start: m.index, end: m.index + m[0].length });
+    }
+    if (sentences.length === 0) sentences.push({ text: blockText, start: 0, end: blockText.length });
+
+    const offset = selectionOffsetIn(el, range);
+    let match =
+      offset != null ? sentences.find((s) => offset >= s.start && offset < s.end) : null;
+    // Fall back to a plain word search only when position lookup didn't
+    // land inside any sentence (e.g. leading/trailing whitespace quirks).
+    if (!match) match = sentences.find((s) => s.text.toLowerCase().includes(selectedText));
+    let context = (match ? match.text : blockText).trim();
 
     // A "sentence" that's really just the selected word itself (no
     // surrounding text found) isn't context worth storing.
@@ -467,7 +499,6 @@
         translatedEl.textContent = result.translatedText;
       }
       translatedEl.classList.remove("sanoja-skeleton");
-      speakBtn.disabled = false;
 
       // Whichever side is Finnish — the original selection, or the
       // translation — computed once and reused for both saving the word and
@@ -476,6 +507,30 @@
       const cleanedTranslated = stripEdgePunctuation((result.translatedText || "").trim());
       const finnishText = result.translatedLangCode === "fi" ? cleanedTranslated : cleanedSource;
       const englishText = result.translatedLangCode === "en" ? cleanedTranslated : cleanedSource;
+
+      // Wire up and enable the speak button right away, before the
+      // save-word logic below — that path can await a second network call
+      // (translating the surrounding context), and doing this after it used
+      // to leave the button enabled but not yet listening for clicks for
+      // however long that call took, which read as the speak icon silently
+      // doing nothing on the most common case (a Finnish page).
+      //
+      // Always speak the Finnish side, no matter which direction the lookup
+      // went. The point of the audio is Finnish pronunciation — speaking the
+      // English translation instead (which used to happen for every word on
+      // a Finnish-language page, since Finnish was usually the detected
+      // *source*, not the "translated" side) wasn't useful and just read as
+      // "why does it keep reading English?".
+      const speakText = finnishText || result.translatedText;
+      speakBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        speak(speakText, "fi");
+      });
+      speakBtn.disabled = false;
+      // Only auto-speak if the user has turned that on in the popup settings.
+      if (settings.autoSpeak) {
+        speak(speakText, "fi");
+      }
 
       // Save the word for later review — only when a single word was
       // selected, not a phrase or full sentence, and it actually translated
@@ -501,22 +556,6 @@
         }
         saveWord(finnishText, englishText, context, contextTranslation);
         maybeShowSaveHint(popupEl);
-      }
-
-      // Always speak the Finnish side, no matter which direction the lookup
-      // went. The point of the audio is Finnish pronunciation — speaking the
-      // English translation instead (which used to happen for every word on
-      // a Finnish-language page, since Finnish was usually the detected
-      // *source*, not the "translated" side) wasn't useful and just read as
-      // "why does it keep reading English?".
-      const speakText = finnishText || result.translatedText;
-      speakBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        speak(speakText, "fi");
-      });
-      // Only auto-speak if the user has turned that on in the popup settings.
-      if (settings.autoSpeak) {
-        speak(speakText, "fi");
       }
     } catch (err) {
       translatedEl.textContent =
