@@ -395,7 +395,9 @@ header h1 {
 }
 
 .context-tip {
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 3px;
   color: var(--text-muted);
 }
 
@@ -417,9 +419,6 @@ header h1 {
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
   z-index: 1000;
   pointer-events: none;
-  /* The word-list context tip packs the Finnish sentence and its English
-     translation into one string separated by "\n" — pre-line is what makes
-     that render as two lines instead of running together as one. */
   white-space: pre-line;
 }
 
@@ -1040,6 +1039,28 @@ header h1 {
 
 .grade-btn:active {
   transform: scale(0.97);
+}
+
+/* Same fix as `.quiz-intro` above: `.primary-btn`/`.ghost-btn` are
+   block-level boxes (flex/inline with a block outer display), so the
+   ancestor's `text-align: center` doesn't center them, and each one is
+   left to size itself off its own label — "Review 20 more" ends up much
+   wider than "View words", so the pair reads as mismatched instead of a
+   single button group. A centering flex column plus a shared min-width
+   on both buttons fixes both problems at once. */
+.quiz-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.quiz-done .primary-btn,
+.quiz-done .ghost-btn {
+  justify-content: center;
+  width: 100%;
+  max-width: 220px;
 }
 
 .quiz-done-icon {

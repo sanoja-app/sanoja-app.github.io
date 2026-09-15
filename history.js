@@ -497,12 +497,11 @@ function renderList(words) {
     if (w.context) {
       const ctxTip = document.createElement("span");
       ctxTip.className = "context-tip";
-      ctxTip.textContent = " ⓘ";
-      // No recall exercise happening in this table — the English word is
-      // already sitting right there in the next column — so the translation
-      // can just show alongside the sentence instead of waiting on a reveal.
-      const tip = w.contextTranslation ? `${w.context}\n${w.contextTranslation}` : w.context;
-      initTooltip(ctxTip, tip);
+      ctxTip.innerHTML = iconSvg("eye", 13);
+      // Just the Finnish sentence — the English word is already sitting
+      // right there in the next column, so repeating its translation here
+      // too was redundant.
+      initTooltip(ctxTip, w.context);
       tdFi.appendChild(ctxTip);
     }
 
