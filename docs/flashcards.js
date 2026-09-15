@@ -125,11 +125,19 @@ function render() {
   const frontLang = showFinnishFirst ? "Finnish" : "English";
   const backLang = showFinnishFirst ? "English" : "Finnish";
 
+  // The example sentence is in Finnish, same as the desktop quiz — shown on
+  // the front too, since seeing it doesn't give away the English answer.
+  const contextHtml = card.context
+    ? `<div class="context">“${escapeHtml(card.context)}”</div>`
+    : "";
+
   cardArea.innerHTML = `
     <div class="card${flipped ? " flipped" : ""}" id="cardEl">
       <div>
         <div class="lang">${flipped ? backLang : frontLang}</div>
         <div class="word">${escapeHtml(flipped ? back : front)}</div>
+        ${flipped ? "" : contextHtml}
+        ${flipped ? "" : '<div class="hint">Tap to reveal</div>'}
       </div>
     </div>`;
   document.getElementById("cardEl").addEventListener("click", () => {

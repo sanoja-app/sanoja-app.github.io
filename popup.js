@@ -62,6 +62,7 @@ phoneBtn.addEventListener("click", async () => {
     const words = Object.values(sanojaWords).map((w) => ({
       finnish: w.finnish,
       english: w.english,
+      context: w.context || "",
       mastered: !!w.mastered,
       nextReview: w.nextReview || null,
     }));

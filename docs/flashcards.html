@@ -112,14 +112,23 @@
   }
   .card .word { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
   .card .lang { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 10px; }
+  .card .context { font-size: 13.5px; font-weight: 400; font-style: italic; color: var(--text-secondary); margin-top: 10px; letter-spacing: normal; text-transform: none; }
+  .card .hint { font-size: 11.5px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 14px; }
   .card.flipped { background: var(--accent-soft); border-color: var(--accent-soft); }
   .card.flipped .lang { color: var(--accent-dark); }
 
   .controls {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 16px;
   }
+  .roundBtnWrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .roundBtnLabel { font-size: 11px; font-weight: 600; color: var(--text-secondary); }
   .roundBtn {
     width: 52px;
     height: 52px;
@@ -179,15 +188,24 @@
   <p class="progress" id="progress" hidden></p>
   <div id="cardArea"></div>
   <div class="controls" id="controls" hidden>
-    <button class="roundBtn" id="shuffleBtn" aria-label="Shuffle">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16,3 21,3 21,8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21,16 21,21 16,21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
-    </button>
-    <button class="roundBtn primary" id="nextBtn" aria-label="Next word">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-    </button>
-    <button class="roundBtn" id="masteredBtn" aria-label="Mark known">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,12.5 9,17.5 20,6"/></svg>
-    </button>
+    <div class="roundBtnWrap">
+      <button class="roundBtn" id="shuffleBtn" aria-label="Shuffle">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16,3 21,3 21,8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21,16 21,21 16,21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+      </button>
+      <span class="roundBtnLabel">Shuffle</span>
+    </div>
+    <div class="roundBtnWrap">
+      <button class="roundBtn primary" id="nextBtn" aria-label="Next word">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <span class="roundBtnLabel">Next</span>
+    </div>
+    <div class="roundBtnWrap">
+      <button class="roundBtn" id="masteredBtn" aria-label="Mark known">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,12.5 9,17.5 20,6"/></svg>
+      </button>
+      <span class="roundBtnLabel">Know it</span>
+    </div>
   </div>
 </main>
 
