@@ -1003,7 +1003,9 @@ function ensureVoicesLoaded() {
     window.speechSynthesis.addEventListener("voiceschanged", onVoicesChanged);
     setTimeout(() => {
       window.speechSynthesis.removeEventListener("voiceschanged", onVoicesChanged);
-      resolve(window.speechSynthesis.getVoices() || []);
+      const voices = window.speechSynthesis.getVoices() || [];
+      if (voices.length === 0) voicesReadyPromise = null;
+      resolve(voices);
     }, 1000);
   });
   return voicesReadyPromise;
@@ -1023,8 +1025,12 @@ function pickFinnishVoice(voices) {
 
 async function speakFinnish(text) {
   if (!("speechSynthesis" in window)) return;
-  window.speechSynthesis.cancel();
   const voices = await ensureVoicesLoaded();
+  const synth = window.speechSynthesis;
+  if (synth.speaking || synth.pending) {
+    synth.cancel();
+    await new Promise((r) => setTimeout(r, 80));
+  }
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "fi-FI";
   const voice = pickFinnishVoice(voices);
@@ -1034,10 +1040,17 @@ async function speakFinnish(text) {
   // the one thing on this screen with no visible timeline otherwise,
   // whether it fired from a click or the automatic per-card speech.
   quizSpeakBtn.classList.add("speaking");
-  utterance.onend = () => quizSpeakBtn.classList.remove("speaking");
-  utterance.onerror = () => quizSpeakBtn.classList.remove("speaking");
-  window.speechSynthesis.speak(utterance);
+  currentUtterance = utterance; // keep a reference so Chrome can't GC it mid-speech
+  const done = () => {
+    quizSpeakBtn.classList.remove("speaking");
+    if (currentUtterance === utterance) currentUtterance = null;
+  };
+  utterance.onend = done;
+  utterance.onerror = done;
+  synth.resume();
+  synth.speak(utterance);
 }
+let currentUtterance = null;
 
 // ---------- Wiring ----------
 

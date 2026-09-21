@@ -284,7 +284,10 @@
       // Some browsers never fire voiceschanged — don't hang forever.
       setTimeout(() => {
         window.speechSynthesis.removeEventListener("voiceschanged", onVoicesChanged);
-        resolve(window.speechSynthesis.getVoices() || []);
+        const voices = window.speechSynthesis.getVoices() || [];
+        // Don't cache an empty list — retry on the next click.
+        if (voices.length === 0) voicesReadyPromise = null;
+        resolve(voices);
       }, 1000);
     });
     return voicesReadyPromise;
@@ -307,15 +310,29 @@
 
   async function speak(text, langCode) {
     if (!("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
     const voices = await ensureVoicesLoaded();
+    const synth = window.speechSynthesis;
+    // Chrome silently drops a speak() issued in the same tick as cancel(),
+    // so only cancel if something is playing and give it a beat to settle.
+    if (synth.speaking || synth.pending) {
+      synth.cancel();
+      await new Promise((r) => setTimeout(r, 80));
+    }
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = LOCALE_MAP[langCode] || langCode;
     const voice = pickVoice(voices, langCode);
     if (voice) utterance.voice = voice;
     utterance.rate = 0.92;
-    window.speechSynthesis.speak(utterance);
+    // Chrome can garbage-collect an utterance mid-speech (no audio, no
+    // events) unless something holds a reference until it ends.
+    currentUtterance = utterance;
+    utterance.onend = utterance.onerror = () => {
+      if (currentUtterance === utterance) currentUtterance = null;
+    };
+    synth.resume();
+    synth.speak(utterance);
   }
+  let currentUtterance = null;
 
   // Only single-word selections get logged to the word list — dragging across
   // a whole sentence still shows a translation popup, it just doesn't pollute
