@@ -7,7 +7,7 @@
 // cache-first version never re-checked the server, so a phone that had installed
 // the page kept running the old flashcards.js/html forever after a deploy.
 // Bump CACHE only to purge old entries; updates no longer depend on it.
-const CACHE = "sanoja-flashcards-v2";
+const CACHE = "sanoja-flashcards-v3";
 const SHELL = [
   "flashcards.html",
   "flashcards.js",
@@ -15,6 +15,8 @@ const SHELL = [
   "assets/icon128.png",
   "assets/icon192.png",
   "assets/icon512.png",
+  "assets/icon-maskable-512.png",
+  "assets/apple-touch-icon.png",
 ];
 const NETWORK_TIMEOUT_MS = 4000;
 

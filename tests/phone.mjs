@@ -224,6 +224,30 @@ const text = (page, sel) => page.locator(sel).first().innerText();
     const has = await page.locator('link[rel="apple-touch-icon"]').count();
     return has ? {} : { fail: "no <link rel=apple-touch-icon>, so iOS will use a page screenshot as the icon" };
   });
+  await check("install", "home-screen icon is at least 180x180 and fully opaque", async () => {
+    const href = await page.locator('link[rel="apple-touch-icon"]').getAttribute("href");
+    const res = await context.request.get(new URL(href, page.url()).href);
+    if (!res.ok()) return { fail: `${href} returned ${res.status()}` };
+    const png = await res.body();
+    const width = png.readUInt32BE(16);
+    const height = png.readUInt32BE(20);
+    const colorType = png[25]; // 4 = grey+alpha, 6 = RGBA
+    const hasAlpha = colorType === 4 || colorType === 6 || png.includes(Buffer.from("tRNS"));
+    if (width < 180 || height < 180) return { fail: `${href} is ${width}x${height}; iOS wants 180x180, and a smaller image is stretched and looks pixelated` };
+    if (hasAlpha) return { fail: `${href} has transparency; iOS fills transparent areas with black` };
+    return { note: `${width}x${height}, opaque` };
+  });
+  await check("install", "every icon in the manifest loads, and one is maskable", async () => {
+    const manifestUrl = new URL(await page.locator('link[rel="manifest"]').getAttribute("href"), page.url()).href;
+    const manifest = await (await context.request.get(manifestUrl)).json();
+    for (const icon of manifest.icons) {
+      const r = await context.request.get(new URL(icon.src, manifestUrl).href);
+      if (!r.ok()) return { fail: `${icon.src} returned ${r.status()}` };
+    }
+    return manifest.icons.some((i) => (i.purpose || "").includes("maskable"))
+      ? {}
+      : { fail: "no icon with purpose \"maskable\", so Android crops the logo's edges with its own shape" };
+  });
   await context.close();
 }
 
