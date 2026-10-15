@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="fi"><head><meta charset="utf-8"><title>Shadow DOM Finnish page</title>
+<style>body{font:28px/1.6 sans-serif;margin:40px}</style></head>
+<body>
+<!-- Regression fixture for the tori.fi bug: text lives inside an open shadow root,
+     where Range.getBoundingClientRect() reports a 0x0 rect. -->
+<my-card></my-card>
+<script>
+  class MyCard extends HTMLElement {
+    constructor() {
+      super();
+      const root = this.attachShadow({ mode: "open" });
+      root.innerHTML = '<style>p{font:28px/1.6 sans-serif;margin:0}</style><p>Pyörä myydään halvalla koska talvi tulee pian.</p>';
+    }
+  }
+  customElements.define("my-card", MyCard);
+</script>
+</body></html>
