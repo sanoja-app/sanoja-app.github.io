@@ -9,9 +9,7 @@ const isDarkMode = window.matchMedia && window.matchMedia("(prefers-color-scheme
 const BOX_INTERVAL_DAYS = { 1: 1, 2: 3, 3: 7, 4: 14, 5: 30 };
 const MAX_BOX = 5;
 
-// TODO: fill in once the Chrome Web Store listing is approved — the review
-// deep-link is only valid after the item has a public store page.
-const CWS_REVIEW_URL = "https://chromewebstore.google.com/detail/REPLACE_WITH_ITEM_ID/reviews";
+const CWS_REVIEW_URL = "https://chromewebstore.google.com/detail/sanoja-read-words-in-finn/eoiodkapeakjcapimphbcjmijddaadjk/reviews";
 // Shown once each, at these streak milestones — asked right after a genuine
 // accomplishment (not on first open, not repeatedly), which is when people
 // are most likely to actually leave a review instead of dismissing it.
