@@ -22,6 +22,29 @@ Key facts:
 - [Privacy policy](https://sanoja-app.github.io/privacy.html): exactly what data the extension touches.
 - [Source code and README](https://github.com/sanoja-app/sanoja-app.github.io): full technical documentation, install instructions, and feature list.
 
+## Finnish word guides
+
+- [How to say "thank you" in Finnish](https://sanoja-app.github.io/words/thank-you-in-finnish.html): kiitos
+- [How to say "hello" in Finnish](https://sanoja-app.github.io/words/hello-in-finnish.html): hei
+- [How to say "goodbye" in Finnish](https://sanoja-app.github.io/words/goodbye-in-finnish.html): näkemiin
+- [Good morning, good evening and good night in Finnish](https://sanoja-app.github.io/words/good-morning-in-finnish.html): hyvää huomenta
+- [How to say "how are you?" in Finnish](https://sanoja-app.github.io/words/how-are-you-in-finnish.html): mitä kuuluu
+- [How to say "sorry" and "excuse me" in Finnish](https://sanoja-app.github.io/words/sorry-in-finnish.html): anteeksi
+- [How to say "you're welcome" and "please" in Finnish](https://sanoja-app.github.io/words/youre-welcome-in-finnish.html): ole hyvä
+- [How to say "do you speak English?" in Finnish](https://sanoja-app.github.io/words/do-you-speak-english-in-finnish.html): puhutko englantia
+- [How to say "I don't understand" in Finnish](https://sanoja-app.github.io/words/i-dont-understand-in-finnish.html): en ymmärrä
+- ["Shop" in Finnish: kauppa, and the three forms you need](https://sanoja-app.github.io/words/shop-in-finnish.html): kauppa
+- ["Rent" in Finnish: vuokra and housing words](https://sanoja-app.github.io/words/rent-in-finnish.html): vuokra
+- ["Doctor" in Finnish: lääkäri, and how to talk about health](https://sanoja-app.github.io/words/doctor-in-finnish.html): lääkäri
+- ["Pharmacy" in Finnish: apteekki](https://sanoja-app.github.io/words/pharmacy-in-finnish.html): apteekki
+- ["Work" in Finnish: työ, töissä and töihin](https://sanoja-app.github.io/words/work-in-finnish.html): työ
+- ["House" and "home" in Finnish: talo and koti](https://sanoja-app.github.io/words/house-and-home-in-finnish.html): talo / koti
+- ["Water" in Finnish: vesi, and why it changes shape](https://sanoja-app.github.io/words/water-in-finnish.html): vesi
+- ["Coffee" in Finnish: kahvi](https://sanoja-app.github.io/words/coffee-in-finnish.html): kahvi
+- [Numbers in Finnish: 1 to 10 and beyond](https://sanoja-app.github.io/words/numbers-in-finnish.html): yksi, kaksi, kolme
+- [Days of the week in Finnish](https://sanoja-app.github.io/words/days-of-the-week-in-finnish.html): maanantai
+- [Colors in Finnish](https://sanoja-app.github.io/words/colors-in-finnish.html): punainen
+
 ## Optional
 
 - [Feedback page](https://sanoja-app.github.io/feedback.html): how to report bugs or request features.
