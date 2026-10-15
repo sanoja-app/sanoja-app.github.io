@@ -166,6 +166,13 @@ async function refresh(showFeedback) {
   }
   try {
     const fetched = await fetchFromServer(id);
+    // The server snapshot knows nothing about "known" marks made on this phone, so
+    // carry those over — otherwise every Refresh would bring known words back.
+    const wordKey = (w) => `${w.finnish}\u0000${w.english}`;
+    const knownHere = new Set(loadCached().filter((w) => w.mastered).map(wordKey));
+    fetched.forEach((w) => {
+      if (knownHere.has(wordKey(w))) w.mastered = true;
+    });
     words = fetched;
     saveCached(fetched);
     if (showFeedback) showToast(`Synced ${fetched.length} word${fetched.length === 1 ? "" : "s"}`);

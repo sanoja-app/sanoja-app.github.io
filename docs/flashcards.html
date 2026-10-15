@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex" />
 <link rel="canonical" href="https://sanoja-app.github.io/flashcards.html" />
 <link rel="icon" href="assets/icon128.png" />
-<link rel="apple-touch-icon" href="assets/icon128.png" />
+<link rel="apple-touch-icon" href="assets/icon192.png" />
 <link rel="manifest" href="flashcards.webmanifest" />
 <meta name="theme-color" content="#2962ff" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -56,8 +56,12 @@
     background: none;
     color: var(--text-secondary);
     padding: 6px;
+    min-width: 44px;
+    min-height: 44px;
     cursor: pointer;
     display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .iconBtn:active { color: var(--accent); }
 
@@ -71,7 +75,8 @@
     font: inherit;
     font-size: 12.5px;
     font-weight: 600;
-    padding: 6px 12px;
+    padding: 0 16px;
+    min-height: 44px;
     border-radius: 999px;
     border: 1px solid var(--gridline);
     background: var(--page);

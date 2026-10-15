@@ -3,3 +3,5 @@
 node_modules/
 .vscode/
 .wrangler/
+tests/report.json
+tests/phone-report.json

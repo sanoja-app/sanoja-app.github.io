@@ -1,9 +1,22 @@
-// Minimal offline shell for the flashcards PWA. Caches the app's own static
-// files so the page opens without a network connection; word data itself is
-// fetched fresh (and cached separately in localStorage by flashcards.js), so
-// it's never served from here.
-const CACHE = "sanoja-flashcards-v1";
-const SHELL = ["flashcards.html", "flashcards.js", "flashcards.webmanifest", "assets/icon128.png"];
+// Offline shell for the flashcards PWA. Caches the app's own static files so the
+// page opens without a network connection; word data itself is fetched fresh (and
+// cached separately in localStorage by flashcards.js), so it's never served from here.
+//
+// Network-first: when online, always take the latest files (and refresh the cache
+// with them); only fall back to the cache when the network fails. The earlier
+// cache-first version never re-checked the server, so a phone that had installed
+// the page kept running the old flashcards.js/html forever after a deploy.
+// Bump CACHE only to purge old entries; updates no longer depend on it.
+const CACHE = "sanoja-flashcards-v2";
+const SHELL = [
+  "flashcards.html",
+  "flashcards.js",
+  "flashcards.webmanifest",
+  "assets/icon128.png",
+  "assets/icon192.png",
+  "assets/icon512.png",
+];
+const NETWORK_TIMEOUT_MS = 4000;
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)));
@@ -17,10 +30,40 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+function fetchWithTimeout(request) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("network timeout")), NETWORK_TIMEOUT_MS);
+    fetch(request).then(
+      (res) => {
+        clearTimeout(timer);
+        resolve(res);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      }
+    );
+  });
+}
+
 self.addEventListener("fetch", (event) => {
-  const url = new URL(event.request.url);
+  const { request } = event;
+  const url = new URL(request.url);
+  if (request.method !== "GET") return;
   if (url.origin !== location.origin) return; // never intercept the sync API call
+
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    fetchWithTimeout(request)
+      .then((res) => {
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then((cache) => cache.put(request, copy));
+        }
+        return res;
+      })
+      .catch(() =>
+        // ignoreSearch so "flashcards.html?sync=<id>" still finds the cached shell offline.
+        caches.match(request, { ignoreSearch: true }).then((cached) => cached || Promise.reject(new Error("offline and not cached")))
+      )
   );
 });
