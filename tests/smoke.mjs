@@ -18,7 +18,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const extensionPath = path.resolve(here, "..");
+// EXTENSION_PATH lets you test an unzipped store package instead of the working tree.
+const extensionPath = process.env.EXTENSION_PATH ? path.resolve(process.env.EXTENSION_PATH) : path.resolve(here, "..");
 const fixturesDir = path.join(here, "fixtures");
 
 // Local fixtures are deterministic; live sites catch real-world breakage but can
