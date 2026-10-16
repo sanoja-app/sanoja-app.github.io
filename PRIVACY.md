@@ -1,6 +1,6 @@
 # Privacy Policy — Sanoja
 
-_Last updated: September 2026_
+_Last updated: October 2026_
 
 Sanoja is a small personal project for learning Finnish vocabulary while
 browsing. This page explains exactly what it does and does not do with your
@@ -13,6 +13,9 @@ data.
   (`translate.googleapis.com`) to get a translation. This only happens
   when you actively select text — Sanoja never reads or transmits a
   page's content on its own.
+- When the text you select is a single word, it is also looked
+  up on English Wiktionary (`en.wiktionary.org`) to find its dictionary
+  form (for example "talossa" → "talo"). Only that one word is sent.
 - Words you look up, along with your review schedule, quiz history, and
   streak, are saved using Chrome's local extension storage
   (`chrome.storage.local`) on your own computer. This data is never
@@ -49,7 +52,11 @@ data.
 Google's translation endpoint is used solely to translate the text you
 select, subject to [Google's own privacy
 policy](https://policies.google.com/privacy). Sanoja has no relationship
-with Google beyond calling this public endpoint. The only other network
+with Google beyond calling this public endpoint. Wiktionary's public
+API is used solely to look up the dictionary form of a single word you
+select, subject to the [Wikimedia privacy
+policy](https://foundation.wikimedia.org/wiki/Policy:Privacy_policy).
+The only other network
 service involved is the Cloudflare Worker described above, which Sanoja
 itself operates, used solely for the optional phone-sync feature.
 
