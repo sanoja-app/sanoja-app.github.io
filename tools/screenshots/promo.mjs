@@ -94,8 +94,8 @@ const marquee = `<style>
 <div class="glow"></div>
 <div class="left">
   <div class="brand"><img src="${logo}"><span>Sanoja</span></div>
-  <h2>Learn Finnish from the pages you already read.</h2>
-  <p>Translate any word, hear it, and review it later with flashcards.</p>
+  <h2>Click any word. Understand it. Remember it.</h2>
+  <p>Finnish translator and dictionary with pronunciation and flashcards.</p>
 </div>
 <div class="card"><img src="${crop}"></div>`;
 

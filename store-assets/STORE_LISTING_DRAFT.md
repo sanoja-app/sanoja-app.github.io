@@ -17,7 +17,7 @@ English–Finnish translator and dictionary: select any word on a page, hear it,
 
 ## 3. Detailed description (English)
 
-Learn Finnish from the pages you already read.
+Understand Finnish as you browse, and actually remember the words you look up.
 
 Sanoja is an English–Finnish translator and dictionary that works inside your browser. Select or double-click any word or short phrase on any website: English shows in Finnish, Finnish shows in English, detected automatically with no language picker. One click plays the Finnish pronunciation.
 
@@ -42,7 +42,7 @@ Suomi–englanti-sanakirja: valitse sana miltä tahansa sivulta, kuuntele se ja 
 
 Description:
 
-Opi suomea lukemiesi sivujen avulla.
+Ymmärrä suomea selatessasi ja muista hakemasi sanat.
 
 Sanoja on englannin ja suomen välinen kääntäjä ja sanakirja selaimessasi. Valitse tai kaksoisnapsauta mitä tahansa sanaa tai lyhyttä ilmausta millä tahansa verkkosivulla: englanti käännetään suomeksi ja suomi englanniksi, ja kieli tunnistetaan automaattisesti. Yhdellä napsautuksella kuulet suomenkielisen ääntämisen.
 
