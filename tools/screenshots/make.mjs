@@ -90,6 +90,8 @@ const context = await chromium.launchPersistentContext(fs.mkdtempSync(path.join(
 });
 const sw = context.serviceWorkers()[0] || (await context.waitForEvent("serviceworker"));
 const extId = new URL(sw.url()).host;
+// Mark the first-run "Saved for later" hint as seen so it never appears in captures.
+await sw.evaluate(() => chrome.storage.sync.set({ sanojaSeenSaveHint: true }));
 
 async function popupShot(file, name, targetSelector) {
   const page = await context.newPage();
