@@ -360,6 +360,38 @@
   section.closing h2 { font-size: 28px; margin: 0 0 12px; }
   section.closing p { color: var(--text-secondary); font-size: 16px; margin: 0 0 30px; }
 
+  /* Phone install path: a Chrome extension can't be installed from a phone,
+     so phones get a "send the link to your computer" button instead. */
+  button.btn { font-family: inherit; line-height: inherit; cursor: pointer; }
+  .mobile-only { display: none !important; }
+  .mobile-note {
+    color: var(--text-secondary);
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 14px;
+  }
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translate(-50%, 16px);
+    width: max-content;
+    max-width: calc(100% - 32px);
+    text-align: center;
+    background: var(--text-primary);
+    color: white;
+    font-size: 14.5px;
+    font-weight: 600;
+    padding: 12px 20px;
+    border-radius: 999px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s, transform .2s;
+    z-index: 10;
+  }
+  section.closing p.mobile-note { color: var(--text-secondary); font-size: 15px; margin: -14px 0 16px; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
   footer { padding: 40px 0 56px; }
   footer .wrap {
     display: flex;
@@ -404,6 +436,11 @@
     .carousel-slide img { max-height: 320px; }
     .carousel-slide p { max-width: none; }
   }
+  @media (max-width: 760px), (hover: none) and (pointer: coarse) {
+    .desktop-only { display: none !important; }
+    .btn.mobile-only { display: inline-flex !important; }
+    p.mobile-only { display: block !important; }
+  }
   @media (max-width: 560px) {
     .feature-grid { grid-template-columns: 1fr; gap: 14px; }
     .feature-card { padding: 22px 20px; }
@@ -441,8 +478,10 @@
         <span class="pill">🆓 Free &amp; open source</span>
         <span class="pill">🔒 No account, no tracking</span>
       </div>
+      <p class="mobile-note mobile-only">Sanoja runs in Chrome on your computer.</p>
       <div class="cta-row">
-        <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/sanoja-read-words-in-finn/eoiodkapeakjcapimphbcjmijddaadjk">Install Sanoja</a>
+        <a class="btn btn-primary desktop-only" href="https://chromewebstore.google.com/detail/sanoja-read-words-in-finn/eoiodkapeakjcapimphbcjmijddaadjk">Install Sanoja</a>
+        <button class="btn btn-primary mobile-only send-link" type="button">Send the link to my computer</button>
         <a class="btn btn-ghost" href="https://github.com/sanoja-app/sanoja-app.github.io">View Source</a>
       </div>
     </div>
@@ -646,7 +685,9 @@
     <div class="wrap">
       <h2>Ready to start learning Finnish?</h2>
       <p>Install it, select a word on any page, and you're already reviewing your first one.</p>
-      <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/sanoja-read-words-in-finn/eoiodkapeakjcapimphbcjmijddaadjk">Install Sanoja — It's Free</a>
+      <p class="mobile-note mobile-only">Sanoja runs in Chrome on your computer.</p>
+      <a class="btn btn-primary desktop-only" href="https://chromewebstore.google.com/detail/sanoja-read-words-in-finn/eoiodkapeakjcapimphbcjmijddaadjk">Install Sanoja — It's Free</a>
+      <button class="btn btn-primary mobile-only send-link" type="button">Send the link to my computer</button>
     </div>
   </section>
 
@@ -662,6 +703,66 @@
       </div>
     </div>
   </footer>
+
+  <div class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (function () {
+      var url = 'https://chromewebstore.google.com/detail/sanoja-read-words-in-finn/eoiodkapeakjcapimphbcjmijddaadjk';
+      var toast = document.querySelector('.toast');
+      var hideTimer;
+
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(function () { toast.classList.remove('show'); }, 3200);
+      }
+
+      function copyFallback() {
+        var ta = document.createElement('textarea');
+        ta.value = url;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        var ok = false;
+        try { ok = document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
+        return ok;
+      }
+
+      function copyLink() {
+        var done = function () { showToast('Link copied. Open it on your computer.'); };
+        var fail = function () {
+          if (copyFallback()) done();
+          else window.prompt('Copy this link and open it on your computer:', url);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(done, fail);
+        } else {
+          fail();
+        }
+      }
+
+      document.querySelectorAll('.send-link').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (navigator.share) {
+            navigator.share({
+              title: 'Sanoja',
+              text: 'Sanoja: translate Finnish words as you browse. Install it in Chrome on your computer:',
+              url: url
+            }).catch(function (err) {
+              if (!err || err.name !== 'AbortError') copyLink();
+            });
+          } else {
+            copyLink();
+          }
+        });
+      });
+    })();
+  </script>
 
 </body>
 </html>
