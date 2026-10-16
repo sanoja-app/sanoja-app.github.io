@@ -97,6 +97,7 @@ const quizAnswerBlock = document.getElementById("quizAnswerBlock");
 const quizEnglish = document.getElementById("quizEnglish");
 const quizContext = document.getElementById("quizContext");
 const quizContextTranslation = document.getElementById("quizContextTranslation");
+const quizBaseForm = document.getElementById("quizBaseForm");
 const quizRevealRow = document.getElementById("quizRevealRow");
 const showAnswerBtn = document.getElementById("showAnswerBtn");
 const quizGradeRow = document.getElementById("quizGradeRow");
@@ -311,7 +312,10 @@ function getFiltered() {
   let list = getActiveWords(); // words you're still learning — mastered ones have their own section
   if (term) {
     list = list.filter(
-      (w) => w.finnish.toLowerCase().includes(term) || w.english.toLowerCase().includes(term)
+      (w) =>
+        w.finnish.toLowerCase().includes(term) ||
+        w.english.toLowerCase().includes(term) ||
+        (w.baseForm || "").toLowerCase().includes(term)
     );
   }
   const compare = SORT_COMPARATORS[sortField] || SORT_COMPARATORS.lastSeen;
@@ -501,6 +505,12 @@ function renderList(words) {
       // too was redundant.
       initTooltip(ctxTip, w.context);
       tdFi.appendChild(ctxTip);
+    }
+    if (w.baseForm) {
+      const base = document.createElement("div");
+      base.className = "base-form";
+      base.textContent = `from ${w.baseForm}`;
+      tdFi.appendChild(base);
     }
 
     const tdEn = document.createElement("td");
@@ -824,6 +834,15 @@ function showCard() {
     quizContextTranslation.hidden = false;
   } else {
     quizContextTranslation.hidden = true;
+  }
+  // Revealed with the answer: for an inflected word ("juokse"), the
+  // dictionary form it comes from.
+  if (card.baseForm) {
+    const meaning = card.baseFormMeaning ? ` — ${card.baseFormMeaning}` : "";
+    quizBaseForm.textContent = `Dictionary form: ${card.baseForm}${meaning}`;
+    quizBaseForm.hidden = false;
+  } else {
+    quizBaseForm.hidden = true;
   }
   quizAnswerBlock.hidden = true;
   quizRevealRow.hidden = false;

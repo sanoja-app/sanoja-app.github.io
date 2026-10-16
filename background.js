@@ -13,6 +13,12 @@
 chrome.runtime.setUninstallURL("https://sanoja-app.github.io/uninstall.html");
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message && message.type === "sanoja-baseform") {
+    lookupBaseForm(message.word)
+      .then((result) => sendResponse({ ok: true, result }))
+      .catch((err) => sendResponse({ ok: false, error: String((err && err.message) || err) }));
+    return true;
+  }
   if (!message || message.type !== "sanoja-translate") return false;
 
   translate(message.text, message.targetLang, message.sourceLang)
@@ -38,4 +44,119 @@ async function translate(text, targetLang, sourceLang) {
   const translatedText = data[0].map((chunk) => chunk[0]).join("");
   const detectedLang = data[2];
   return { translatedText, detectedLang };
+}
+
+// Inflected Finnish words ("juokse", "talossa", "kädet") are hard to look up
+// for someone who has never seen the word before — the dictionary form
+// ("juosta", "talo", "käsi") is what every dictionary and course uses, and
+// Google only has real dictionary data for that form. English Wiktionary
+// marks inflected forms as "form-of" entries linking to the dictionary form
+// ("inessive singular of talo"), so one lookup finds it. Its API sends Access-Control-Allow-Origin: *, so this fetch
+// needs no extra host_permissions (which would make Chrome disable the
+// extension on update until the user re-approves it).
+const WIKTIONARY_API = "https://en.wiktionary.org/api/rest_v1/page/definition/";
+
+// Kept for as long as the service worker lives, so looking at the same word
+// again (very common while reading) doesn't hit Wiktionary again — its API
+// rate-limits bursts of requests.
+const wiktionaryCache = new Map();
+
+async function fetchWiktionaryFinnish(word) {
+  if (wiktionaryCache.has(word)) return wiktionaryCache.get(word);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 4000);
+  try {
+    const res = await fetch(WIKTIONARY_API + encodeURIComponent(word), {
+      signal: controller.signal,
+      headers: { "Api-User-Agent": "Sanoja browser extension" },
+    });
+    // 404 is a real "no such page" and safe to remember; anything else
+    // (429 rate limit, 5xx) is temporary, so don't cache it.
+    if (res.status === 404) wiktionaryCache.set(word, null);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const entries = data.fi || null;
+    wiktionaryCache.set(word, entries);
+    return entries;
+  } catch {
+    return null; // timeout or network error — treat as "no entry"
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function htmlToText(html) {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"');
+}
+
+// Only inflections count — Wiktionary uses the same "form-of" markup for
+// synonyms, abbreviations and alternative spellings, which aren't what a
+// learner needs here.
+const GRAMMAR_WORDS =
+  /\b(inflection|singular|plural|connegative|infinitive|participle|indicative|imperative|conditional|potential|passive|nominative|genitive|partitive|essive|translative|inessive|elative|illative|adessive|ablative|allative|abessive|comitative|instructive)\b/i;
+
+// Returns { baseForm, meaning }, or null
+// when the word is already a dictionary form or Wiktionary doesn't know it.
+async function lookupBaseForm(word) {
+  word = (word || "").trim();
+  if (!word) return null;
+  const candidates = [...new Set([word, word.toLowerCase()])];
+
+  for (const candidate of candidates) {
+    const entries = await fetchWiktionaryFinnish(candidate);
+    if (!entries) continue;
+
+    for (const entry of entries) {
+      // An entry whose first sense is a real meaning is a dictionary form
+      // itself ("talo" = house); later senses there are things like
+      // synonyms or abbreviations, not inflections.
+      const first = ((entry.definitions || [])[0] || {}).definition || "";
+      if (!/form-of-definition/.test(first)) continue;
+
+      for (const def of entry.definitions || []) {
+        const html = def.definition || "";
+        const link = html.match(/form-of-definition-link[\s\S]*?<a [^>]*title="([^"]+)"/);
+        if (!link) continue;
+        if (!GRAMMAR_WORDS.test(htmlToText(html))) continue;
+        const baseForm = link[1];
+        if (baseForm.toLowerCase() === candidate.toLowerCase()) continue;
+
+        return { baseForm, meaning: await lookupMeaning(baseForm) };
+      }
+    }
+  }
+  return null;
+}
+
+// First real (non-form-of) English definition of a dictionary form, e.g.
+// "to run (move swiftly)".
+async function lookupMeaning(baseForm) {
+  try {
+    const entries = await fetchWiktionaryFinnish(baseForm);
+    for (const entry of entries || []) {
+      for (const def of entry.definitions || []) {
+        if (/form-of-definition/.test(def.definition || "")) continue;
+        let text = htmlToText(def.definition || "")
+          .split("\n")[0]
+          .replace(/\[[^\]]*\]/g, "") // usage notes like "[with illative]"
+          .split(";")[0]
+          .replace(/\s+/g, " ")
+          .trim();
+        // Long glosses read badly in a small card — drop the explanation in
+        // parentheses before resorting to cutting the text off.
+        if (text.length > 45) text = text.replace(/\s*\([^)]*\)/g, "").trim();
+        if (text) return text.length > 60 ? `${text.slice(0, 59).trim()}…` : text;
+      }
+    }
+  } catch {
+    // Best-effort — the dictionary form alone is still useful.
+  }
+  return "";
 }

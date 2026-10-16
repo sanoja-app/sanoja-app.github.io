@@ -356,6 +356,12 @@ header h1 {
   font-weight: 600;
 }
 
+.list-view td.finnish .base-form {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
 .list-view td.count,
 .list-view td.lastseen {
   color: var(--text-secondary);
@@ -1004,6 +1010,12 @@ header h1 {
   font-size: 20px;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.flash-base-form {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--text-secondary);
 }
 
 .quiz-actions {

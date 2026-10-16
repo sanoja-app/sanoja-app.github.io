@@ -78,6 +78,12 @@
     textWrap.appendChild(translatedLabel);
     textWrap.appendChild(translated);
 
+    // Filled in only when the word turns out to be an inflected Finnish
+    // form — see renderBaseForm.
+    const base = document.createElement("div");
+    base.className = "sanoja-base";
+    base.hidden = true;
+
     const speakBtn = document.createElement("button");
     speakBtn.className = "sanoja-speak";
     speakBtn.setAttribute("aria-label", "Hear pronunciation");
@@ -87,6 +93,7 @@
     row.appendChild(textWrap);
     row.appendChild(speakBtn);
     el.appendChild(row);
+    el.appendChild(base);
 
     document.body.appendChild(el);
 
@@ -100,7 +107,7 @@
 
     popupEl = el;
 
-    return { originalLabelEl: originalLabel, translatedLabelEl: translatedLabel, translatedEl: translated, speakBtn };
+    return { originalLabelEl: originalLabel, translatedLabelEl: translatedLabel, translatedEl: translated, speakBtn, baseEl: base };
   }
 
   // Thrown/rejected whenever the extension has been reloaded or updated
@@ -159,6 +166,42 @@
         }
       }
     });
+  }
+
+  // Asks background.js for the dictionary form of an inflected Finnish word
+  // ("juokse" -> "juosta"). Never rejects: a missing dictionary form just
+  // means the card shows the translation alone, as before.
+  function lookupBaseForm(word) {
+    return new Promise((resolve) => {
+      try {
+        if (!chrome.runtime || !chrome.runtime.id) return resolve(null);
+        chrome.runtime.sendMessage({ type: "sanoja-baseform", word }, (response) => {
+          if (chrome.runtime.lastError || !response || !response.ok) return resolve(null);
+          resolve(response.result || null);
+        });
+      } catch {
+        resolve(null);
+      }
+    });
+  }
+
+  function renderBaseForm(baseEl, baseForm) {
+    baseEl.textContent = "";
+    const label = document.createElement("div");
+    label.className = "sanoja-label";
+    label.textContent = "Dictionary form";
+
+    const word = document.createElement("div");
+    word.className = "sanoja-base-word";
+    const strong = document.createElement("strong");
+    strong.textContent = baseForm.baseForm;
+    word.appendChild(strong);
+    if (baseForm.meaning) word.appendChild(document.createTextNode(` — ${baseForm.meaning}`));
+
+    baseEl.appendChild(label);
+    baseEl.appendChild(word);
+
+    baseEl.hidden = false;
   }
 
   // Only two directions exist: English -> Finnish, and Finnish -> English.
@@ -380,7 +423,7 @@
     });
   }
 
-  function saveWord(finnish, english, context, contextTranslation) {
+  function saveWord(finnish, english, context, contextTranslation, baseForm) {
     const key = finnish.trim().toLowerCase();
     if (!key) return;
     chrome.storage.local.get({ sanojaWords: {} }, ({ sanojaWords }) => {
@@ -404,6 +447,10 @@
         // Its English translation, captured alongside it at the same time —
         // kept in step with context above, not touched on later re-saves.
         contextTranslation: existing && existing.contextTranslation ? existing.contextTranslation : contextTranslation || "",
+        // Dictionary form of an inflected word ("juokse" -> "juosta") and its
+        // meaning. Empty when the saved word is already the dictionary form.
+        baseForm: baseForm ? baseForm.baseForm : (existing && existing.baseForm) || "",
+        baseFormMeaning: baseForm ? baseForm.meaning : (existing && existing.baseFormMeaning) || "",
       };
       chrome.storage.local.set({ sanojaWords });
     });
@@ -497,7 +544,13 @@
     if (text === lastText && popupEl) return; // already showing this one
     lastText = text;
 
-    const { originalLabelEl, translatedLabelEl, translatedEl, speakBtn } = createPopup(text, rect);
+    const { originalLabelEl, translatedLabelEl, translatedEl, speakBtn, baseEl } = createPopup(text, rect);
+    const popupAtStart = popupEl;
+
+    // Started alongside the translation rather than after it, so the
+    // dictionary form usually arrives at the same time. Whether it's shown
+    // at all is decided once we know the word is Finnish.
+    const baseFormPromise = isSingleWord(text) ? lookupBaseForm(stripEdgePunctuation(text.trim())) : null;
 
     try {
       const result = await translateBidirectional(text);
@@ -516,6 +569,13 @@
         translatedEl.textContent = result.translatedText;
       }
       translatedEl.classList.remove("sanoja-skeleton");
+
+      const isFinnishSource = result.translatedLangCode === "en";
+      if (baseFormPromise && isFinnishSource) {
+        baseFormPromise.then((baseForm) => {
+          if (baseForm && popupEl === popupAtStart) renderBaseForm(baseEl, baseForm);
+        });
+      }
 
       // Whichever side is Finnish — the original selection, or the
       // translation — computed once and reused for both saving the word and
@@ -571,7 +631,8 @@
             // Best-effort — the word itself still saves fine without this.
           }
         }
-        saveWord(finnishText, englishText, context, contextTranslation);
+        const baseForm = baseFormPromise && isFinnishSource ? await baseFormPromise : null;
+        saveWord(finnishText, englishText, context, contextTranslation, baseForm);
         maybeShowSaveHint(popupEl);
       }
     } catch (err) {

@@ -103,3 +103,24 @@
   background: #48484a;
   cursor: default;
 }
+
+#sanoja-popup .sanoja-base {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+#sanoja-popup .sanoja-base[hidden] {
+  display: none;
+}
+
+#sanoja-popup .sanoja-base-word {
+  font-size: 13px;
+  color: #d1d1d6;
+  word-break: break-word;
+}
+
+#sanoja-popup .sanoja-base-word strong {
+  color: #ffffff;
+  font-weight: 600;
+}
