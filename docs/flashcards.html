@@ -17,14 +17,16 @@
   :root {
     color-scheme: light;
     --page: #ffffff;
-    --surface-alt: #f7f8fa;
+    --surface-alt: #f3f5f8;
     --text-primary: #0b0e14;
     --text-secondary: #57606f;
-    --text-muted: #8a92a3;
-    --gridline: #e7e9ee;
+    --text-muted: #6b7280;
+    --gridline: #e3e6ec;
     --accent: #2962ff;
     --accent-dark: #1a3fd6;
     --accent-soft: #e8edff;
+    --known: #13894a;
+    --known-soft: #e3f5ea;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body {
@@ -40,181 +42,259 @@
     flex-direction: column;
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
+  button { font: inherit; }
+  [hidden] { display: none !important; }
+
+  /* Everything sits in one centred column so the desktop view is a phone-shaped card, not a stretched one. */
+  .app {
+    flex: 1;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
 
   header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--gridline);
+    padding: 6px 8px 6px 20px;
     flex-shrink: 0;
   }
-  .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 16px; }
-  .brand img { width: 22px; height: 22px; border-radius: 6px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+  .brand img { width: 26px; height: 26px; border-radius: 7px; }
+  .headerActions { display: flex; }
   .iconBtn {
     border: none;
     background: none;
     color: var(--text-secondary);
-    padding: 6px;
     min-width: 44px;
     min-height: 44px;
+    border-radius: 12px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  .iconBtn:active { color: var(--accent); }
+  .iconBtn:active { background: var(--surface-alt); color: var(--accent); }
+  .iconBtn.spinning svg { animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* Segmented control: one tap target per list, with how many words each holds. */
   .filters {
     display: flex;
-    gap: 8px;
-    padding: 12px 20px 0;
+    gap: 4px;
+    margin: 4px 20px 0;
+    padding: 4px;
+    background: var(--surface-alt);
+    border-radius: 14px;
     flex-shrink: 0;
   }
   .filter {
-    font: inherit;
-    font-size: 12.5px;
-    font-weight: 600;
-    padding: 0 16px;
+    flex: 1;
     min-height: 44px;
-    border-radius: 999px;
-    border: 1px solid var(--gridline);
-    background: var(--page);
+    border: none;
+    border-radius: 10px;
+    background: none;
     color: var(--text-secondary);
+    font-size: 15px;
+    font-weight: 600;
     cursor: pointer;
   }
-  .filter.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-dark); }
-
-  [hidden] { display: none !important; }
+  .filter .count { font-weight: 500; color: var(--text-muted); margin-left: 4px; font-variant-numeric: tabular-nums; }
+  .filter.active { background: var(--page); color: var(--text-primary); box-shadow: 0 1px 3px rgba(11, 14, 20, 0.12); }
+  .filter.active .count { color: var(--accent); }
 
   main {
     flex: 1;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    gap: 20px;
+    padding: 16px 20px 20px;
+    gap: 14px;
     min-height: 0;
   }
 
-  .progress { font-size: 12.5px; color: var(--text-muted); }
+  .progressRow { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .progressTrack { flex: 1; height: 6px; border-radius: 3px; background: var(--surface-alt); overflow: hidden; }
+  .progressFill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.25s ease; }
+  .progress { font-size: 14px; font-weight: 600; color: var(--text-secondary); margin: 0; font-variant-numeric: tabular-nums; }
+
+  #cardArea {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+    perspective: 1200px;
+  }
 
   .card {
-    width: 100%;
-    max-width: 360px;
-    aspect-ratio: 3 / 2;
-    background: var(--surface-alt);
+    position: relative;
+    flex: 1;
+    max-height: 520px;
+    min-height: 260px;
+    background: var(--page);
     border: 1px solid var(--gridline);
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 24px;
-    cursor: pointer;
-    user-select: none;
-  }
-  .card .word { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
-  .card .lang { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 10px; }
-  .card .context { font-size: 13.5px; font-weight: 400; font-style: italic; color: var(--text-secondary); margin-top: 10px; letter-spacing: normal; text-transform: none; }
-  .card .hint { font-size: 11.5px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 14px; }
-  .card.flipped { background: var(--accent-soft); border-color: var(--accent-soft); }
-  .card.flipped .lang { color: var(--accent-dark); }
-
-  .controls {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-  }
-  .roundBtnWrap {
+    border-radius: 24px;
+    box-shadow: 0 8px 24px rgba(11, 14, 20, 0.06);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    justify-content: center;
+    text-align: center;
+    padding: 56px 24px;
+    cursor: pointer;
+    user-select: none;
+    touch-action: pan-y;
   }
-  .roundBtnLabel { font-size: 11px; font-weight: 600; color: var(--text-secondary); }
-  .roundBtn {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    border: 1px solid var(--gridline);
+  .card.flipped { background: var(--accent-soft); border-color: transparent; box-shadow: none; }
+  .card.flipIn { animation: flipIn 0.22s ease-out; }
+  @keyframes flipIn { from { transform: rotateY(-80deg); opacity: 0.4; } to { transform: none; opacity: 1; } }
+  .card.dragging { transition: none; }
+  .card.settle { transition: transform 0.2s ease; }
+
+  .card .lang {
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+  }
+  .card.flipped .lang { color: var(--accent-dark); }
+  .card .word { font-size: 40px; line-height: 1.15; font-weight: 750; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+  .card .context { font-size: 17px; line-height: 1.5; font-style: italic; color: var(--text-secondary); margin-top: 16px; max-width: 30ch; }
+  .card .hint {
+    position: absolute;
+    bottom: 18px;
+    left: 0;
+    right: 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+  }
+
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .actionBtn {
+    min-height: 56px;
+    border-radius: 16px;
+    border: 1.5px solid var(--gridline);
     background: var(--page);
     color: var(--text-primary);
+    font-size: 17px;
+    font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 8px;
     cursor: pointer;
   }
-  .roundBtn:active { background: var(--surface-alt); }
-  .roundBtn.primary { background: var(--accent); border-color: var(--accent); color: white; }
+  .actionBtn:active { transform: scale(0.98); }
+  .actionBtn.known { color: var(--known); }
+  .actionBtn.known:active { background: var(--known-soft); }
+  .actionBtn.primary { background: var(--accent); border-color: var(--accent); color: white; }
+  .actionBtn.primary:active { background: var(--accent-dark); }
+  .actions.single { grid-template-columns: 1fr; }
 
   .empty {
+    margin: auto;
     text-align: center;
-    max-width: 300px;
+    max-width: 320px;
     color: var(--text-secondary);
-    font-size: 14px;
-    line-height: 1.6;
+    font-size: 16px;
+    line-height: 1.55;
   }
-  .empty h2 { font-size: 18px; margin: 0 0 8px; color: var(--text-primary); }
+  .empty .emptyIcon {
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 18px;
+  }
+  .empty .emptyIcon.done { background: var(--known-soft); color: var(--known); }
+  .empty h2 { font-size: 22px; margin: 0 0 8px; color: var(--text-primary); }
+  .empty p { margin: 0; }
+  .empty .actionBtn { margin: 24px auto 0; padding: 0 24px; width: 100%; }
 
   .toast {
     position: fixed;
-    bottom: 20px;
+    bottom: calc(96px + env(safe-area-inset-bottom));
     left: 50%;
-    transform: translateX(-50%) translateY(80px);
+    transform: translateX(-50%) translateY(16px);
+    opacity: 0;
     background: var(--text-primary);
     color: white;
-    font-size: 13px;
-    padding: 10px 16px;
-    border-radius: 10px;
-    transition: transform 0.2s ease;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 12px 18px;
+    border-radius: 12px;
+    white-space: nowrap;
+    transition: transform 0.2s ease, opacity 0.2s ease;
     pointer-events: none;
   }
-  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card.flipIn, .iconBtn.spinning svg { animation: none; }
+    .card.settle, .progressFill, .toast { transition: none; }
+  }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="brand"><img src="assets/icon128.png" alt="" />Flashcards</div>
-  <button class="iconBtn" id="refreshBtn" aria-label="Refresh from extension" title="Refresh from extension">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.3-6.4L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.3 6.4L3 16"/><path d="M8 16H3v5"/></svg>
-  </button>
-</header>
+<div class="app">
+  <header>
+    <div class="brand"><img src="assets/icon128.png" alt="" />Flashcards</div>
+    <div class="headerActions">
+      <button class="iconBtn" id="shuffleBtn" aria-label="Shuffle" title="Shuffle" hidden>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16,3 21,3 21,8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21,16 21,21 16,21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+      </button>
+      <button class="iconBtn" id="refreshBtn" aria-label="Refresh from extension" title="Refresh from extension">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.3-6.4L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.3 6.4L3 16"/><path d="M8 16H3v5"/></svg>
+      </button>
+    </div>
+  </header>
 
-<div class="filters" id="filters" hidden>
-  <button class="filter active" data-filter="due">Due</button>
-  <button class="filter" data-filter="all">All</button>
-  <button class="filter" data-filter="mastered">Known</button>
+  <div class="filters" id="filters" role="group" aria-label="Word list" hidden>
+    <button class="filter active" data-filter="due" aria-pressed="true">Due<span class="count" data-count="due"></span></button>
+    <button class="filter" data-filter="all" aria-pressed="false">All<span class="count" data-count="all"></span></button>
+    <button class="filter" data-filter="mastered" aria-pressed="false">Known<span class="count" data-count="mastered"></span></button>
+  </div>
+
+  <main id="main">
+    <div class="progressRow" id="progressRow" hidden>
+      <div class="progressTrack"><div class="progressFill" id="progressFill"></div></div>
+      <p class="progress" id="progress"></p>
+    </div>
+    <div id="cardArea"></div>
+    <div class="actions" id="controls" hidden>
+      <button class="actionBtn known" id="masteredBtn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,12.5 9,17.5 20,6"/></svg>
+        Know it
+      </button>
+      <button class="actionBtn primary" id="nextBtn">
+        Next
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+  </main>
 </div>
 
-<main id="main">
-  <p class="progress" id="progress" hidden></p>
-  <div id="cardArea"></div>
-  <div class="controls" id="controls" hidden>
-    <div class="roundBtnWrap">
-      <button class="roundBtn" id="shuffleBtn" aria-label="Shuffle">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16,3 21,3 21,8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21,16 21,21 16,21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
-      </button>
-      <span class="roundBtnLabel">Shuffle</span>
-    </div>
-    <div class="roundBtnWrap">
-      <button class="roundBtn primary" id="nextBtn" aria-label="Next word">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-      </button>
-      <span class="roundBtnLabel">Next</span>
-    </div>
-    <div class="roundBtnWrap">
-      <button class="roundBtn" id="masteredBtn" aria-label="Mark known">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,12.5 9,17.5 20,6"/></svg>
-      </button>
-      <span class="roundBtnLabel">Know it</span>
-    </div>
-  </div>
-</main>
-
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="flashcards.js"></script>
 </body>
