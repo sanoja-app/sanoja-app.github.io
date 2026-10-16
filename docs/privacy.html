@@ -78,7 +78,21 @@
 
   @media (max-width: 760px) {
     .doc-hero h1 { font-size: 28px; }
-    .nav-links { gap: 16px; }
+    /* Phone nav: brand on its own row, links in a swipeable strip below it.
+       The nav Install button is hidden: the extension can't be installed
+       from a phone, and it would push the strip off-screen. */
+    header.nav { padding: 14px 0 2px; }
+    header.nav .wrap { flex-wrap: wrap; }
+    .nav-links {
+      width: calc(100% + 24px);
+      margin: 6px -12px 0;
+      gap: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .nav-links::-webkit-scrollbar { display: none; }
+    .nav-links a { flex-shrink: 0; display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; white-space: nowrap; font-size: 15px; }
+    .nav-links .nav-cta { display: none; }
   }
 </style>
 </head>

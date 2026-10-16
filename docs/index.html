@@ -296,8 +296,8 @@
     margin-top: 36px;
   }
   .carousel-controls button.arrow {
-    width: 42px;
-    height: 42px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     border: 1px solid var(--gridline);
     background: var(--page);
@@ -309,17 +309,28 @@
     justify-content: center;
   }
   .carousel-controls button.arrow:hover { background: var(--surface-alt); }
-  .carousel-controls .dots { display: flex; align-items: center; gap: 8px; }
+  .carousel-controls .dots { display: flex; align-items: center; }
+  /* The button is a 20×44 tap target; the visible dot is its ::before. */
   .carousel-controls .dot {
+    width: 20px;
+    height: 44px;
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .carousel-controls .dot::before {
+    content: "";
     width: 8px;
     height: 8px;
     border-radius: 50%;
     background: var(--gridline);
-    border: none;
-    padding: 0;
-    cursor: pointer;
   }
-  .carousel-controls .dot.active { background: var(--accent); width: 22px; border-radius: 4px; }
+  .carousel-controls .dot.active { width: 34px; }
+  .carousel-controls .dot.active::before { background: var(--accent); width: 22px; border-radius: 4px; }
 
   /* Closing CTA */
   section.faq { padding: 80px 0; }
@@ -363,13 +374,40 @@
   footer a:hover { color: var(--accent); }
 
   @media (max-width: 760px) {
+    .hero { padding: 48px 0 48px; }
     .hero h1 { font-size: 34px; }
+    .hero p.lead { font-size: 17px; }
     .feature-grid { grid-template-columns: repeat(2, 1fr); }
-    .nav-links { gap: 16px; }
+    /* Phone nav: brand on its own row, links in a swipeable strip below it.
+       The nav Install button is hidden because the hero's Install button
+       sits directly below. */
+    header.nav { padding: 14px 0 2px; }
+    header.nav .wrap { flex-wrap: wrap; }
+    .nav-links {
+      width: calc(100% + 24px);
+      margin: 6px -12px 0;
+      gap: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .nav-links::-webkit-scrollbar { display: none; }
+    .nav-links a { flex-shrink: 0; display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; white-space: nowrap; font-size: 15px; }
+    .nav-links .nav-cta { display: none; }
+    section.features, section.showcase, section.faq { padding: 56px 0; }
+    .faq-item { padding: 6px 0; }
+    .faq-item summary { padding: 10px 0; }
+    .faq-item p { margin: 2px 0 12px; }
+    footer .wrap > div { display: flex; flex-wrap: wrap; column-gap: 20px; }
+    footer a { margin-left: 0; display: inline-block; padding: 12px 0; font-size: 15px; }
     .carousel-slide { grid-template-columns: 1fr; gap: 24px; }
     .carousel-slide .shot { min-height: 240px; }
     .carousel-slide img { max-height: 320px; }
     .carousel-slide p { max-width: none; }
+  }
+  @media (max-width: 560px) {
+    .feature-grid { grid-template-columns: 1fr; gap: 14px; }
+    .feature-card { padding: 22px 20px; }
+    .cta-row .btn { flex: 1 1 100%; justify-content: center; }
   }
 </style>
 </head>
