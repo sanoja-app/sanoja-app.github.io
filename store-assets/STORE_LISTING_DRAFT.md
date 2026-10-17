@@ -31,7 +31,7 @@ Every word you look up is saved, usually together with the sentence it appeared 
 
 Useful for learners of Finnish at any level, and for English speakers living in Finland who want to understand what they read: news, forms, ads and messages.
 
-No accounts, no ads, no tracking. Your word list and progress stay in your browser and are never sent anywhere automatically. The only network requests Sanoja makes are the translation lookup itself (for text you explicitly select) and, only if you tap "Practice on phone", a copy of your word list sent to Sanoja's own server so your phone can load it. Full privacy policy: https://sanoja-app.github.io/privacy.html
+No accounts, no ads, no tracking. Your word list and progress stay in your browser and are never sent anywhere automatically. The only network requests Sanoja makes are for text you explicitly select (its translation, its dictionary form from Wiktionary, and its pronunciation audio) and, only if you tap "Practice on phone", a copy of your word list sent to Sanoja's own server so your phone can load it. Full privacy policy: https://sanoja-app.github.io/privacy.html
 
 Built for one language pair on purpose: English and Finnish, both directions, nothing else.
 
@@ -56,7 +56,7 @@ Jokainen hakemasi sana tallentuu, yleensä sen lauseen kanssa, jossa se esiintyi
 
 Sopii suomen oppijoille tasosta riippumatta sekä Suomessa asuville, jotka haluavat ymmärtää lukemansa: uutiset, lomakkeet, mainokset ja viestit.
 
-Ei tilejä, ei mainoksia, ei seurantaa. Sanalistasi ja edistymisesi pysyvät selaimessasi, eikä niitä lähetetä minnekään automaattisesti. Ainoat verkkopyynnöt ovat itse käännöshaku (vain valitsemastasi tekstistä) ja, vain jos napautat "Practice on phone", kopio sanalistastasi Sanojan omalle palvelimelle, jotta puhelimesi voi ladata sen. Tietosuojaseloste: https://sanoja-app.github.io/privacy.html
+Ei tilejä, ei mainoksia, ei seurantaa. Sanalistasi ja edistymisesi pysyvät selaimessasi, eikä niitä lähetetä minnekään automaattisesti. Ainoat verkkopyynnöt koskevat itse valitsemaasi tekstiä (käännös, perusmuoto Wiktionarysta ja ääntämisääni) ja, vain jos napautat "Practice on phone", kopiota sanalistastasi Sanojan omalle palvelimelle, jotta puhelimesi voi ladata sen. Tietosuojaseloste: https://sanoja-app.github.io/privacy.html
 
 Tehty tarkoituksella yhdelle kielipaarille: englanti ja suomi, molempiin suuntiin, ei muuta.
 

@@ -207,10 +207,19 @@ async function checkPage(context, serviceWorker, baseUrl, spec) {
       await speakBtn.click();
     } else {
       await speakBtn.click();
-      const started = await page
-        .waitForFunction(() => speechSynthesis.speaking || speechSynthesis.pending, null, { timeout: 3000 })
-        .then(() => true, () => false);
-      started ? pass("speak", `${voices} voices available`) : fail("speak", "clicked speak but nothing started speaking");
+      // Google's voice plays in the extension's offscreen page, out of the
+      // test's sight; the button's data-voice says which voice played.
+      const voice = await page
+        .waitForFunction(() => document.querySelector("#sanoja-popup .sanoja-speak")?.dataset.voice, null, { timeout: 8000 })
+        .then((h) => h.jsonValue(), () => null);
+      const browserStarted =
+        voice === "browser" &&
+        (await page
+          .waitForFunction(() => speechSynthesis.speaking || speechSynthesis.pending, null, { timeout: 3000 })
+          .then(() => true, () => false));
+      if (voice === "google") pass("speak", "Google voice played");
+      else if (browserStarted) pass("speak", `fell back to the browser voice (${voices} voices available)`);
+      else fail("speak", voice ? "fell back to the browser voice, but nothing started speaking" : "clicked speak but no voice played");
     }
 
     // 4. word saved. Sanoja only saves single-word lookups whose translation is also

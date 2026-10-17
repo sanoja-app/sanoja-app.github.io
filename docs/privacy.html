@@ -135,6 +135,10 @@
         looked up on English Wiktionary (<code>en.wiktionary.org</code>) to
         find its dictionary form (for example “talossa” → “talo”). Only that
         one word is sent.</li>
+      <li>When you press the speaker icon (or turn on automatic
+        pronunciation), the Finnish word or phrase is sent to Google
+        Translate's speech service (<code>translate.google.com</code>) to
+        fetch its pronunciation audio. Only that text is sent.</li>
       <li>Words you look up, along with your review schedule, quiz history,
         and streak, are saved using Chrome's local extension storage
         (<code>chrome.storage.local</code>) on your own computer. This data
@@ -171,8 +175,8 @@
 
     <h2>Third-party services</h2>
     <p>
-      Google's translation endpoint is used solely to translate the text
-      you select, subject to
+      Google's translation and speech endpoints are used solely to
+      translate the text you select and to fetch its pronunciation, subject to
       <a href="https://policies.google.com/privacy">Google's own privacy
       policy</a>. Sanoja has no relationship with Google beyond calling
       this public endpoint. Wiktionary's public API is used solely to look
@@ -194,6 +198,9 @@
         — used only when you tap "Practice on phone", to sync your word
         list to the phone flashcard page, and (separately) to submit
         optional feedback if you choose to uninstall the extension.</li>
+      <li><strong>offscreen</strong> — to play pronunciation audio in a
+        hidden extension page. It shows no warning and gives Sanoja no
+        access to your data.</li>
       <li><strong>Content script on all pages</strong> — to detect when
         you select or double-click a word so a translation popup can
         appear. It only acts on text you've explicitly selected.</li>

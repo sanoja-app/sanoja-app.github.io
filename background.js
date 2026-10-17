@@ -19,6 +19,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       .catch((err) => sendResponse({ ok: false, error: String((err && err.message) || err) }));
     return true;
   }
+  if (message && message.type === "sanoja-speak") {
+    speakWithGoogleVoice(message.text, message.lang)
+      .then(sendResponse)
+      .catch(() => sendResponse({ ok: false, started: false }));
+    return true;
+  }
   if (!message || message.type !== "sanoja-translate") return false;
 
   translate(message.text, message.targetLang, message.sourceLang)
@@ -27,6 +33,42 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   return true; // keep the message channel open for the async sendResponse above
 });
+
+// Pronunciation uses Google Translate's voice, which sounds far more natural
+// than the Finnish system voices most computers have. The audio plays in an
+// offscreen document (see offscreen.js). Responds { ok, started }: ok means
+// it played to the end; started=false means nothing was heard, so the
+// caller should fall back to speechSynthesis.
+const MAX_TTS_LENGTH = 200; // the endpoint rejects longer text
+
+// Chrome closes an AUDIO_PLAYBACK offscreen document after ~30 seconds
+// without sound, so check for it on every call rather than remembering
+// that one was created.
+let creatingOffscreen = null;
+async function ensureOffscreen() {
+  const existing = await chrome.runtime.getContexts({ contextTypes: ["OFFSCREEN_DOCUMENT"] });
+  if (existing.length > 0) return;
+  if (!creatingOffscreen) {
+    creatingOffscreen = chrome.offscreen
+      .createDocument({
+        url: "offscreen.html",
+        reasons: ["AUDIO_PLAYBACK"],
+        justification: "Play the Finnish pronunciation of the selected word",
+      })
+      .finally(() => {
+        creatingOffscreen = null;
+      });
+  }
+  await creatingOffscreen;
+}
+
+async function speakWithGoogleVoice(text, lang) {
+  text = (text || "").trim();
+  if (!text || text.length > MAX_TTS_LENGTH || !chrome.offscreen) return { ok: false, started: false };
+  await ensureOffscreen();
+  const result = await chrome.runtime.sendMessage({ type: "sanoja-offscreen-play", text, lang: lang || "fi" });
+  return result || { ok: false, started: false };
+}
 
 // sourceLang defaults to "auto" (let Google guess). The content script can
 // pass an explicit source instead when it has a stronger signal than Google's

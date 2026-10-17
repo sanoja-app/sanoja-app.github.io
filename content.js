@@ -351,7 +351,27 @@
     );
   }
 
+  // Google Translate's voice first (played by background.js); the
+  // browser's own voice only if that couldn't be heard at all.
   async function speak(text, langCode) {
+    if (window.speechSynthesis && (window.speechSynthesis.speaking || window.speechSynthesis.pending)) {
+      window.speechSynthesis.cancel();
+    }
+    const result = await new Promise((resolve) => {
+      try {
+        chrome.runtime.sendMessage({ type: "sanoja-speak", text, lang: langCode }, (response) => {
+          resolve(chrome.runtime.lastError ? null : response);
+        });
+      } catch {
+        resolve(null); // extension was reloaded; this content script is orphaned
+      }
+    });
+    if (result && result.started) return "google";
+    speakWithBrowserVoice(text, langCode);
+    return "browser";
+  }
+
+  async function speakWithBrowserVoice(text, langCode) {
     if (!("speechSynthesis" in window)) return;
     const voices = await ensureVoicesLoaded();
     const synth = window.speechSynthesis;
@@ -601,7 +621,8 @@
       const speakText = finnishText || result.translatedText;
       speakBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        speak(speakText, "fi");
+        // Which voice played, for tests/smoke.mjs.
+        speak(speakText, "fi").then((voice) => (speakBtn.dataset.voice = voice));
       });
       speakBtn.disabled = false;
       // Only auto-speak if the user has turned that on in the popup settings.

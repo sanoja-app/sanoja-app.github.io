@@ -1040,7 +1040,29 @@ function pickFinnishVoice(voices) {
   );
 }
 
+// Google Translate's voice first (played by background.js, which answers
+// once the word has finished playing, so the button pulses for its length);
+// the browser's own voice only if that couldn't be heard at all.
 async function speakFinnish(text) {
+  if (window.speechSynthesis && (window.speechSynthesis.speaking || window.speechSynthesis.pending)) {
+    window.speechSynthesis.cancel();
+  }
+  const request = ++speakRequest;
+  quizSpeakBtn.classList.add("speaking");
+  const result = await new Promise((resolve) => {
+    chrome.runtime.sendMessage({ type: "sanoja-speak", text, lang: "fi" }, (response) => {
+      resolve(chrome.runtime.lastError ? null : response);
+    });
+  });
+  if (request !== speakRequest) return; // a newer word took over the button
+  quizSpeakBtn.classList.remove("speaking");
+  if (result && result.started) return;
+  speakFinnishWithBrowserVoice(text);
+}
+
+let speakRequest = 0;
+
+async function speakFinnishWithBrowserVoice(text) {
   if (!("speechSynthesis" in window)) return;
   const voices = await ensureVoicesLoaded();
   const synth = window.speechSynthesis;

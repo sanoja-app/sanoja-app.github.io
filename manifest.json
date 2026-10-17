@@ -3,7 +3,7 @@
   "name": "Sanoja - Finnish Translator & Dictionary",
   "version": "2.3.0",
   "description": "Finnish translator & dictionary: select any word on the web to translate English ↔ Finnish, hear it, and review with flashcards.",
-  "permissions": ["storage"],
+  "permissions": ["storage", "offscreen"],
   "host_permissions": [
     "https://translate.googleapis.com/*",
     "https://sanoja-uninstall-feedback.shahzainhtc.workers.dev/*"

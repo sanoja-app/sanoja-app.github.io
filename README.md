@@ -97,34 +97,17 @@ when you explicitly tap that button — see [Privacy](#privacy) below.
 
 ## About the voice
 
-There's deliberately no voice picker — Sanoja just tells the browser "speak
-this in Finnish" or "speak this in English" and lets your operating system
-use its own default voice for that language. Simple and predictable, but it
-means voice quality is entirely up to what's installed on your computer.
+Pronunciation uses Google Translate's Finnish voice, the same natural voice
+you hear on translate.google.com. It plays in a hidden extension page
+(`offscreen.html`), because a service worker can't play audio and many
+websites block audio from other domains.
 
-Two related things that used to happen occasionally and are now fixed:
-short, ambiguous words (like "on" — a common English word that's also a very
-common Finnish one) could get mis-identified and spoken in the wrong
-language; and the very first word spoken on a freshly loaded page could come
-out broken/garbled because the browser's voice list hadn't finished loading
-yet. Longer, unambiguous words were never affected by the first issue.
-
-If it still sounds robotic or off, that's the OS voice itself, not the
-extension, and the fix lives at the OS level:
-
-- **macOS**: System Settings → Accessibility → Spoken Content → System Voice
-  → Manage Voices… → search "Finnish" → if an Enhanced or Premium quality
-  option is offered, download it. Restart Chrome afterward. This replaces
-  the system default, so Sanoja picks it up automatically — no extension
-  changes needed.
-- **Windows**: Settings → Time & Language → Speech → Manage voices → Add
-  voices → Finnish.
-
-If Finnish only has one basic voice available with no higher-quality option
-to download, that's a real ceiling on this OS/version — the only way past it
-would be switching to a cloud text-to-speech API instead of the browser's
-built-in voice, which is a bigger change (needs an API key) and isn't
-something this build does.
+If that voice can't be reached (offline, blocked network, or Google changes
+the endpoint), Sanoja falls back to your operating system's built-in Finnish
+voice. That one is usually more robotic. On macOS you can improve it:
+System Settings → Accessibility → Spoken Content → System Voice → Manage
+Voices… → "Finnish" → download an Enhanced or Premium voice, then restart
+Chrome.
 
 ## Notes / limitations (read before relying on this)
 
@@ -133,10 +116,10 @@ something this build does.
   paid API, so there's no API key or cost — but it's an unofficial endpoint
   Google could rate-limit or change without notice. If translations suddenly
   stop working, that's the likely cause.
-- **Pronunciation**: uses your browser/OS's built-in text-to-speech
-  (`speechSynthesis`) with whichever default voice your system has for
-  English or Finnish — no picker, no manual voice selection. Quality depends
-  entirely on what's installed on your system; see "About the voice" above.
+- **Pronunciation**: uses Google Translate's public text-to-speech endpoint,
+  which, like the translation endpoint, is unofficial and could change
+  without notice. If it stops working, Sanoja falls back to the browser's
+  built-in voice; see "About the voice" above.
 - **Word log**: saved locally in the browser's extension storage on this
   computer only — it doesn't sync to other devices or upload anywhere,
   unless you explicitly use "Practice on phone" (see above), which sends a
