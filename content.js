@@ -150,7 +150,9 @@
               return;
             }
             if (!response || !response.ok) {
-              reject(new Error((response && response.error) || "Translate failed"));
+              const err = new Error((response && response.error) || "Translate failed");
+              err.reportedByBackground = true; // background.js already sent it
+              reject(err);
               return;
             }
             resolve({ translatedText: response.translatedText, detectedLang: response.detectedLang });
@@ -731,6 +733,13 @@
       // clean) so a real error is visible via right-click -> Inspect ->
       // Console if this ever happens again.
       console.error("Sanoja translate error:", err);
+      if (err && err.name !== "ExtensionReloadedError" && !err.reportedByBackground) {
+        try {
+          chrome.runtime.sendMessage({ type: "sanoja-error", where: "content", message: String(err.message || err) });
+        } catch {
+          // Extension context gone — nothing to report to.
+        }
+      }
     }
   }
 

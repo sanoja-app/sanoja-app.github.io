@@ -5,3 +5,18 @@ compatibility_date = "2026-09-06"
 [[kv_namespaces]]
 binding = "FEEDBACK"
 id = "8ff90647222c40f1ae7f20cea83a22e7"
+
+# Dedupes and rate-limits Slack alerts (see AlertGate in worker.js).
+# SQLite-backed Durable Objects are included in the Workers Free plan.
+[[durable_objects.bindings]]
+name = "ALERT_GATE"
+class_name = "AlertGate"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["AlertGate"]
+
+[vars]
+# The published extension's ID. Pings from any other extension ID (e.g. an
+# unpacked test build) are labelled [dev] in Slack.
+EXTENSION_ID = "eoiodkapeakjcapimphbcjmijddaadjk"

@@ -160,17 +160,46 @@
         automatically deleted 90 days after your last sync. No other
         extension data (browsing history, quiz history, streak) is
         included in this sync.</li>
+      <li><strong>Anonymous install, uninstall and error reports.</strong>
+        So the one person building Sanoja knows when it's installed,
+        removed, or broken, it sends a few small reports to that same
+        Cloudflare Worker, which forwards them as a message to the
+        developer's private Slack workspace:
+        <ul>
+          <li>once, when you install it;</li>
+          <li>once, when you uninstall it (Chrome opens a page on that
+            server, which then shows an optional “why did you leave?”
+            question);</li>
+          <li>when something goes wrong, e.g. a translation request fails
+            (at most a few times an hour).</li>
+        </ul>
+        Each report contains only: a random ID created when Sanoja was
+        installed (not linked to you, your Google account or any other
+        identifier), the Sanoja version, your Chrome version number,
+        Chrome's display language (e.g. “fi” or “en-GB”), the date you
+        installed it (to know how long it was kept), and, for errors, a
+        short technical error message with any quoted text and web
+        addresses removed. <strong>It never includes the words you look
+        up, your word list, the pages you visit, or your IP
+        address</strong> (Cloudflare sees the IP address of any connection,
+        as with every website, but Sanoja doesn't record or forward it).
+        If you answer the uninstall question, your answer and any comment
+        you type are sent too, together with that same random ID.</li>
     </ul>
 
     <h2>What Sanoja does not do</h2>
     <ul>
-      <li>No analytics, tracking, or telemetry of any kind.</li>
-      <li>No accounts, sign-in, or user identifiers.</li>
+      <li>No analytics or tracking of what you read or look up, and no
+        tracking across websites. The only reports are the anonymous
+        install, uninstall and error reports described above.</li>
+      <li>No accounts or sign-in, and no identifiers beyond the random
+        install ID described above.</li>
       <li>No advertising.</li>
       <li>No data is sold or shared with anyone.</li>
       <li>No data collection beyond the word/phrase you explicitly select
-        for translation, and — only if you choose to use it — the word
-        list sent by "Practice on phone".</li>
+        for translation, the anonymous reports described above, and — only
+        if you choose to use it — the word list sent by "Practice on
+        phone".</li>
     </ul>
 
     <h2>Third-party services</h2>
@@ -184,7 +213,12 @@
       to the <a href="https://foundation.wikimedia.org/wiki/Policy:Privacy_policy">Wikimedia
       privacy policy</a>. The only other network service involved is the
       Cloudflare Worker described above, which Sanoja itself operates,
-      used solely for the optional phone-sync feature.
+      used for the optional phone-sync feature, the uninstall question,
+      and the anonymous install/uninstall/error reports. Those reports are
+      delivered to the developer through Slack (subject to
+      <a href="https://slack.com/trust/privacy/privacy-policy">Slack's
+      privacy policy</a>) and are used only to find and fix problems and
+      to understand whether Sanoja is useful.
     </p>
 
     <h2>Permissions</h2>
@@ -195,9 +229,10 @@
         — to perform translations.</li>
       <li><strong>Access to
         <code>sanoja-uninstall-feedback.shahzainhtc.workers.dev</code></strong>
-        — used only when you tap "Practice on phone", to sync your word
-        list to the phone flashcard page, and (separately) to submit
-        optional feedback if you choose to uninstall the extension.</li>
+        — used when you tap "Practice on phone", to sync your word list
+        to the phone flashcard page; for the optional feedback question
+        when you uninstall; and for the anonymous install, uninstall and
+        error reports described above.</li>
       <li><strong>offscreen</strong> — to play pronunciation audio in a
         hidden extension page. It shows no warning and gives Sanoja no
         access to your data.</li>

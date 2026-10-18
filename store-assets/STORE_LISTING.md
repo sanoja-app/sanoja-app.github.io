@@ -36,12 +36,14 @@ and moving on:
 - A daily streak for finishing your reviews.
 - Tap "Practice on phone" and scan a QR code to keep building your Finnish vocabulary on the go — no app install needed.
 
-No accounts, no ads, no tracking. Your word list and progress stay in your
-browser and are never sent anywhere automatically — the only network
-requests Sanoja makes are the translation lookup itself (for text you
-explicitly select), and, only if you tap "Practice on phone," a copy of
-your word list sent to Sanoja's own server so your phone can load it. Full
-privacy policy: https://sanoja-app.github.io/privacy.html
+No accounts, no ads, no tracking of what you read. Your word list and
+progress stay in your browser and are never sent anywhere automatically —
+the translation lookup only sends the text you explicitly select, and
+"Practice on phone" only sends your word list when you tap it. Sanoja also
+sends an anonymous note when it's installed, uninstalled, or hits an
+error (a random ID, version numbers and a scrubbed error message — never
+your words or the pages you visit), so bugs get fixed fast. Full privacy
+policy: https://sanoja-app.github.io/privacy.html
 
 Built for one language pair on purpose: English and Finnish, both
 directions, nothing else. If you're learning Finnish vocabulary and want a
@@ -62,8 +64,12 @@ Used only when the user taps "Practice on phone" in the popup, to sync
 their word list (Finnish word, English translation, known status) to a
 short-lived link so it can be loaded into a companion flashcard page on
 their phone; and separately, to submit optional feedback if the user
-chooses to fill out the uninstall survey. Both are opt-in and
-user-initiated — nothing is sent automatically.
+chooses to fill out the uninstall survey. It also receives anonymous
+install, uninstall and error reports (a random install ID, extension and
+Chrome version, Chrome UI language, install date, and a scrubbed error
+message — no browsing data, no looked-up words, no personal information),
+so the developer is notified when the extension breaks. Using the existing
+host keeps Sanoja from requesting any new permission.
 
 **Content script on all pages (`<all_urls>`)** — Needed so the
 select-a-word popup can appear on any webpage you're reading, since there's

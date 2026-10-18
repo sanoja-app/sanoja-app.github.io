@@ -10,26 +10,52 @@
 // The service worker doesn't have that restriction, so it does the actual
 // network request here, and the content script just asks it for a result.
 
-chrome.runtime.setUninstallURL("https://sanoja-app.github.io/uninstall.html");
+importScripts("telemetry.js");
+
+// A plain fallback first, so an uninstall is still reported (just without
+// the install ID) if storage can't be read below.
+chrome.runtime.setUninstallURL(`${TELEMETRY_ENDPOINT}/bye`);
+refreshUninstallUrl().catch(() => {});
+flushInstallPing().catch(() => {});
+
+chrome.runtime.onInstalled.addListener(({ reason }) => {
+  handleInstalled(reason).catch(() => {});
+});
+
+self.addEventListener("error", (event) => reportError("background", event.error || event.message));
+self.addEventListener("unhandledrejection", (event) => reportError("background", event.reason));
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message && message.type === "sanoja-error") {
+    if (REPORTABLE_SOURCES.has(message.where)) reportError(message.where, message.message);
+    return false;
+  }
   if (message && message.type === "sanoja-baseform") {
     lookupBaseForm(message.word)
       .then((result) => sendResponse({ ok: true, result }))
-      .catch((err) => sendResponse({ ok: false, error: String((err && err.message) || err) }));
+      .catch((err) => {
+        reportError("baseform", err);
+        sendResponse({ ok: false, error: String((err && err.message) || err) });
+      });
     return true;
   }
   if (message && message.type === "sanoja-speak") {
     speakWithGoogleVoice(message.text, message.lang)
       .then(sendResponse)
-      .catch(() => sendResponse({ ok: false, started: false }));
+      .catch((err) => {
+        reportError("speak", err);
+        sendResponse({ ok: false, started: false });
+      });
     return true;
   }
   if (!message || message.type !== "sanoja-translate") return false;
 
   translate(message.text, message.targetLang, message.sourceLang)
     .then((result) => sendResponse({ ok: true, ...result }))
-    .catch((err) => sendResponse({ ok: false, error: String((err && err.message) || err) }));
+    .catch((err) => {
+      reportError("translate", err);
+      sendResponse({ ok: false, error: String((err && err.message) || err) });
+    });
 
   return true; // keep the message channel open for the async sendResponse above
 });

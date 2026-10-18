@@ -176,6 +176,9 @@
   <script>
     (function () {
       var ENDPOINT = 'https://sanoja-uninstall-feedback.shahzainhtc.workers.dev';
+      // The anonymous install ID the Worker adds when it redirects here, so
+      // this answer can be matched to its uninstall. Absent for older installs.
+      var installId = (location.search.match(/[?&]i=([A-Za-z0-9_-]{8,64})(&|$)/) || [])[1] || '';
       var selected = null;
       var reasonsWrap = document.getElementById('reasons');
       var submitBtn = document.getElementById('un-submit');
@@ -204,7 +207,7 @@
         fetch(ENDPOINT, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ reason: selected, message: message })
+          body: JSON.stringify({ reason: selected, message: message, i: installId })
         }).then(function (res) {
           if (!res.ok) throw new Error('request failed');
           form.style.display = 'none';

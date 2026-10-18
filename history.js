@@ -1,3 +1,13 @@
+// Uncaught errors on this page go to background.js, which reports them
+// (anonymously, rate-limited — see telemetry.js).
+function reportPageError(err) {
+  chrome.runtime
+    .sendMessage({ type: "sanoja-error", where: "history", message: String((err && err.message) || err) })
+    .catch(() => {});
+}
+window.addEventListener("error", (event) => reportPageError(event.error || event.message));
+window.addEventListener("unhandledrejection", (event) => reportPageError(event.reason));
+
 // Sequential blue ramp, from the shared palette reference (light surface: #fcfcfb, dark surface: #1a1a19).
 // Trimmed to steps with enough contrast to stand alone as text (skips the near-surface steps
 // meant for heatmap fills), ordered least -> most frequent.

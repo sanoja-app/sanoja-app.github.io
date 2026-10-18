@@ -1,3 +1,13 @@
+// Uncaught errors on this page go to background.js, which reports them
+// (anonymously, rate-limited — see telemetry.js).
+function reportPageError(err) {
+  chrome.runtime
+    .sendMessage({ type: "sanoja-error", where: "popup", message: String((err && err.message) || err) })
+    .catch(() => {});
+}
+window.addEventListener("error", (event) => reportPageError(event.error || event.message));
+window.addEventListener("unhandledrejection", (event) => reportPageError(event.reason));
+
 const enabledEl = document.getElementById("enabled");
 const autoSpeakEl = document.getElementById("autoSpeak");
 const reviewBtn = document.getElementById("reviewWords");
@@ -102,6 +112,9 @@ phoneBtn.addEventListener("click", async () => {
     });
     phoneStatus.textContent = `${words.length} word${words.length === 1 ? "" : "s"} synced. Scan with your phone camera, then add the page to your home screen. Re-open this panel any time to refresh.`;
   } catch (err) {
+    chrome.runtime
+      .sendMessage({ type: "sanoja-error", where: "phone-sync", message: String((err && err.message) || err) })
+      .catch(() => {});
     phoneStatus.textContent = "Couldn't sync right now — check your connection and try again.";
   } finally {
     phoneBtn.disabled = false;
