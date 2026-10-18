@@ -248,7 +248,18 @@
     return a.slice(0, prefixLen) === b.slice(0, prefixLen);
   }
 
-  async function translateBidirectional(text) {
+  // Google's verdict on the whole sentence around the selection is far more
+  // reliable than on one isolated word.
+  async function contextIsFinnish(context, text) {
+    if (!context || context.length <= text.length + 2) return false;
+    try {
+      return (await callTranslateApi(context, "en")).detectedLang === "fi";
+    } catch {
+      return false;
+    }
+  }
+
+  async function translateBidirectional(text, context) {
     const first = await callTranslateApi(text, "fi");
     const detected = first.detectedLang;
 
@@ -264,7 +275,20 @@
 
     const pageLang = (document.documentElement.lang || "").toLowerCase().slice(0, 2);
 
-    if (detected === "en" && pageLang === "fi") {
+    // Google says English: trust it unless the page or the sentence around
+    // the word says Finnish. Running an English word through the Finnish
+    // round-trip below misreads every English word that also happens to be
+    // Finnish ("home" = mould, "into" = zeal, "tie" = road).
+    if (detected === "en" && pageLang !== "fi" && !(await contextIsFinnish(context, text))) {
+      return {
+        sourceLangName: "English",
+        translatedText: first.translatedText,
+        translatedLangCode: "fi",
+        translatedLangName: "Finnish",
+      };
+    }
+
+    if (detected === "en") {
       const forced = await callTranslateApi(text, "en", "fi");
       return {
         sourceLangName: "Finnish",
@@ -615,7 +639,7 @@
     const baseFormPromise = isSingleWord(text) ? lookupBaseForm(stripEdgePunctuation(text.trim())) : null;
 
     try {
-      const result = await translateBidirectional(text);
+      const result = await translateBidirectional(text, context);
       originalLabelEl.textContent = result.sourceLangName;
 
       // Proper nouns (names like "Kupiainen") and true cross-language
@@ -668,7 +692,8 @@
       });
       speakBtn.disabled = false;
       // Only auto-speak if the user has turned that on in the popup settings.
-      if (settings.autoSpeak) {
+      // ...and only while this word's popup is still the one on screen.
+      if (settings.autoSpeak && popupEl === popupAtStart) {
         speak(speakText, "fi");
       }
 

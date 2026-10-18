@@ -366,7 +366,7 @@ function render(opts) {
   const masteredCount = getMasteredWords().length;
   chrome.storage.local.get({ sanojaStreak: null }, ({ sanojaStreak }) => {
     const streakBadge =
-      sanojaStreak && sanojaStreak.count > 0
+      streakIsAlive(sanojaStreak)
         ? `<span class="streak">${iconSvg("flame", 13)}${sanojaStreak.count} day streak</span>`
         : "";
     // Leads with what you've learned, not a backlog count — a "3 known" is
@@ -929,7 +929,14 @@ function exitQuiz() {
   loadWords(); // refreshes due counts to reflect any cards graded before exiting, then re-renders the intro
 }
 
+// Set while a graded card animates out: a fast double-click (or a click
+// on the other button) used to grade the same card twice, which skipped
+// the next card unseen and lost one of the two schedule writes.
+let grading = false;
+
 function gradeCard(known) {
+  if (grading || quizQueue.length === 0) return;
+  grading = true;
   const card = quizQueue[0];
   // Captured before the requeue below can flip it, so a card only ever
   // counts toward quizFirstTryCorrect for the attempt that actually
@@ -945,7 +952,10 @@ function gradeCard(known) {
     if (known) quizStats.correct += 1;
     if (firstAttempt && known) quizFirstTryCorrect += 1;
 
-    if (!quizPracticeMode) {
+    // Only the first attempt moves the schedule. The retry of a miss comes
+    // seconds after seeing the answer, so getting it right then says
+    // nothing about remembering it: the miss already put it back to box 1.
+    if (!quizPracticeMode && firstAttempt) {
       updateSchedule(card.key, known);
     }
 
@@ -956,6 +966,7 @@ function gradeCard(known) {
     }
 
     flashCard.classList.remove("card-exit", "grade-good", "grade-bad");
+    grading = false;
     showCard();
   }, 150);
 }
@@ -993,14 +1004,32 @@ function updateSchedule(key, known) {
 
 // A day is only "kept" if you finish at least one real (non-practice-all) due
 // session on it; skip a calendar day entirely and the streak resets to 1.
+// The user's own calendar date, not UTC's: toISOString() put the day
+// boundary at 2–3 a.m. in Finland.
+function localDateStr(date) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+// A streak only counts while it can still be continued: practised today or
+// yesterday. Otherwise the badge would show an old streak forever.
+function streakIsAlive(streak) {
+  if (!streak || !(streak.count > 0)) return false;
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return streak.lastPracticeDate >= localDateStr(yesterday);
+}
+
 function updateStreak(onDone) {
   chrome.storage.local.get({ sanojaStreak: null }, ({ sanojaStreak }) => {
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = localDateStr(new Date());
     if (sanojaStreak && sanojaStreak.lastPracticeDate === todayStr) {
       onDone && onDone(sanojaStreak.count); // already counted today
       return;
     }
-    const yesterdayStr = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1); // not now - 24h, which is off by one across DST changes
+    const yesterdayStr = localDateStr(yesterday);
     const next =
       sanojaStreak && sanojaStreak.lastPracticeDate === yesterdayStr
         ? { count: sanojaStreak.count + 1, lastPracticeDate: todayStr }

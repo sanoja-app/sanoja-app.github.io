@@ -55,6 +55,10 @@ async function ensureOffscreen() {
         reasons: ["AUDIO_PLAYBACK"],
         justification: "Play the Finnish pronunciation of the selected word",
       })
+      .catch((err) => {
+        // Another request created it between our check and this call.
+        if (!/single offscreen/i.test(String((err && err.message) || err))) throw err;
+      })
       .finally(() => {
         creatingOffscreen = null;
       });

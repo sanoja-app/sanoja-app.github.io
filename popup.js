@@ -141,8 +141,14 @@ chrome.storage.local.get({ sanojaWords: {}, sanojaStreak: null, sanojaRatePrompt
 
   // Leads with what's known, not a backlog count — same reasoning as the
   // word-log page: "3 known" feels like progress, "12 due" feels like a chore.
+  // Only while the streak can still be continued (practised today or
+  // yesterday, local date), the same rule as history.js.
+  const pad = (n) => String(n).padStart(2, "0");
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = `${yesterday.getFullYear()}-${pad(yesterday.getMonth() + 1)}-${pad(yesterday.getDate())}`;
   const streakBadge =
-    sanojaStreak && sanojaStreak.count > 0
+    sanojaStreak && sanojaStreak.count > 0 && sanojaStreak.lastPracticeDate >= yesterdayStr
       ? `<span class="streak">${iconSvg("flame", 12)}${sanojaStreak.count}</span>`
       : "";
   statLine.innerHTML = `${words.length} word${words.length === 1 ? "" : "s"}` +
