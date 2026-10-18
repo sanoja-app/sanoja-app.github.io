@@ -144,37 +144,47 @@ function htmlToText(html) {
 const GRAMMAR_WORDS =
   /\b(inflection|singular|plural|connegative|infinitive|participle|indicative|imperative|conditional|potential|passive|nominative|genitive|partitive|essive|translative|inessive|elative|illative|adessive|ablative|allative|abessive|comitative|instructive)\b/i;
 
+function isInflectionSense(html) {
+  return /form-of-definition/.test(html) && GRAMMAR_WORDS.test(htmlToText(html));
+}
+
 // Returns { baseForm, meaning }, or null
 // when the word is already a dictionary form or Wiktionary doesn't know it.
+// Errs towards null: no line is better than a wrong dictionary form.
 async function lookupBaseForm(word) {
   word = (word || "").trim();
   if (!word) return null;
   const candidates = [...new Set([word, word.toLowerCase()])];
 
+  const baseForms = new Set();
   for (const candidate of candidates) {
     const entries = await fetchWiktionaryFinnish(candidate);
     if (!entries) continue;
 
     for (const entry of entries) {
-      // An entry whose first sense is a real meaning is a dictionary form
-      // itself ("talo" = house); later senses there are things like
-      // synonyms or abbreviations, not inflections.
+      // An entry whose first sense isn't an inflection means the word is a
+      // dictionary form itself ("sataa" = it rains), even if another entry
+      // calls it an inflection of something else ("partitive singular of
+      // sata"). The reader almost always means the dictionary word, so
+      // show nothing rather than guess.
       const first = ((entry.definitions || [])[0] || {}).definition || "";
-      if (!/form-of-definition/.test(first)) continue;
+      if (!isInflectionSense(first)) return null;
 
       for (const def of entry.definitions || []) {
         const html = def.definition || "";
         const link = html.match(/form-of-definition-link[\s\S]*?<a [^>]*title="([^"]+)"/);
-        if (!link) continue;
-        if (!GRAMMAR_WORDS.test(htmlToText(html))) continue;
-        const baseForm = link[1];
-        if (baseForm.toLowerCase() === candidate.toLowerCase()) continue;
-
-        return { baseForm, meaning: await lookupMeaning(baseForm) };
+        if (!link || !isInflectionSense(html)) continue;
+        if (link[1].toLowerCase() === candidate.toLowerCase()) continue;
+        baseForms.add(link[1]);
       }
     }
   }
-  return null;
+
+  // Inflection of two different words ("tulin": tulla or tuli) — can't
+  // tell which one the text means.
+  if (baseForms.size !== 1) return null;
+  const [baseForm] = baseForms;
+  return { baseForm, meaning: await lookupMeaning(baseForm) };
 }
 
 // First real (non-form-of) English definition of a dictionary form, e.g.
