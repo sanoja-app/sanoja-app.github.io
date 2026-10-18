@@ -10,29 +10,36 @@ const BOX_INTERVAL_DAYS = { 1: 1, 2: 3, 3: 7, 4: 14, 5: 30 };
 const MAX_BOX = 5;
 
 const CWS_REVIEW_URL = "https://chromewebstore.google.com/detail/sanoja-read-words-in-finn/eoiodkapeakjcapimphbcjmijddaadjk/reviews";
-// Shown once each, at these streak milestones — asked right after a genuine
-// accomplishment (not on first open, not repeatedly), which is when people
-// are most likely to actually leave a review instead of dismissing it.
-const RATE_NUDGE_MILESTONES = [3, 7, 14, 30];
+// Rating prompt rule, shared by popup.js, history.js and content.js (each
+// keeps its own copy because they don't share code): ask only people who've
+// saved enough words to know whether Sanoja helps them, never again once
+// they've clicked through to rate, at most once a week, and never after
+// three "Not now"s. State lives in chrome.storage.local.sanojaRatePrompt.
+const RATE_MIN_WORDS = 15;
+const RATE_MAX_DISMISSALS = 3;
+const RATE_GAP_MS = 7 * 24 * 60 * 60 * 1000;
+const RATE_DEFAULT = { rated: false, dismissals: 0, lastShown: 0 };
 
-function maybeShowRateNudge(streakCount) {
-  if (!RATE_NUDGE_MILESTONES.includes(streakCount)) {
-    rateNudge.hidden = true;
-    return;
-  }
-  chrome.storage.local.get({ sanojaRateNudgeShown: [] }, ({ sanojaRateNudgeShown }) => {
-    if (sanojaRateNudgeShown.includes(streakCount)) {
-      rateNudge.hidden = true;
-      return;
-    }
+// Asked right after a round that went well, which is when people are most
+// likely to rate instead of dismissing. Showing it counts as "shown" so it
+// doesn't reappear on every round that week.
+function maybeShowRateNudge(wasGoodRound) {
+  rateNudge.hidden = true;
+  if (!wasGoodRound) return;
+  chrome.storage.local.get({ sanojaWords: {}, sanojaRatePrompt: RATE_DEFAULT }, ({ sanojaWords, sanojaRatePrompt }) => {
+    const state = sanojaRatePrompt;
+    const eligible =
+      Object.keys(sanojaWords).length >= RATE_MIN_WORDS &&
+      !state.rated &&
+      state.dismissals < RATE_MAX_DISMISSALS &&
+      Date.now() - state.lastShown >= RATE_GAP_MS;
+    if (!eligible) return;
     rateNudge.hidden = false;
-    rateNudge.textContent = "Enjoying Sanoja? Leave a quick review →";
+    rateNudge.textContent = "Enjoying Sanoja? A quick rating helps other learners find it →";
     rateNudge.href = CWS_REVIEW_URL;
     rateNudge.target = "_blank";
     rateNudge.rel = "noopener";
-    chrome.storage.local.set({
-      sanojaRateNudgeShown: [...sanojaRateNudgeShown, streakCount],
-    });
+    chrome.storage.local.set({ sanojaRatePrompt: { ...state, lastShown: Date.now() } });
   });
 }
 
@@ -110,6 +117,11 @@ const quizDoneHeadline = document.getElementById("quizDoneHeadline");
 const quizDoneText = document.getElementById("quizDoneText");
 const quizDoneStreak = document.getElementById("quizDoneStreak");
 const rateNudge = document.getElementById("rateNudge");
+rateNudge.addEventListener("click", () => {
+  chrome.storage.local.get({ sanojaRatePrompt: RATE_DEFAULT }, ({ sanojaRatePrompt }) => {
+    chrome.storage.local.set({ sanojaRatePrompt: { ...sanojaRatePrompt, rated: true } });
+  });
+});
 const quizAgainBtn = document.getElementById("quizAgainBtn");
 const practiceMoreBtn = document.getElementById("practiceMoreBtn");
 
@@ -903,8 +915,8 @@ function finishQuiz() {
     updateStreak((count) => {
       quizDoneStreak.hidden = false;
       quizDoneStreak.innerHTML = `${iconSvg("flame", 13)}${count} day streak`;
-      maybeShowRateNudge(count);
     });
+    maybeShowRateNudge(!rough);
   }
   loadWords({ skipPracticeIntro: true }); // refresh due counts / list in the background, without cutting off this screen
 }

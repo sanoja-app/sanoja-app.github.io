@@ -29,6 +29,15 @@
   color: #c7c7cc;
 }
 
+#sanoja-popup .sanoja-rate-link {
+  color: #8fb0ff;
+  font-weight: 600;
+  text-decoration: none;
+}
+#sanoja-popup .sanoja-rate-link:hover {
+  text-decoration: underline;
+}
+
 @keyframes sanoja-fade-in {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }

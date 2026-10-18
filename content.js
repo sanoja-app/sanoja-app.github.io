@@ -443,9 +443,50 @@
     });
   }
 
+  // Rating prompt rule, shared by popup.js, history.js and content.js (each
+  // keeps its own copy because they don't share code): ask only people who've
+  // saved enough words to know whether Sanoja helps them, never again once
+  // they've clicked through to rate, at most once a week, and never after
+  // three "Not now"s. State lives in chrome.storage.local.sanojaRatePrompt.
+  const CWS_REVIEW_URL = "https://chromewebstore.google.com/detail/sanoja-read-words-in-finn/eoiodkapeakjcapimphbcjmijddaadjk/reviews";
+  // On the page itself it's asked only when one of these words is saved:
+  // most people never open the toolbar popup or the quiz, so without this
+  // they'd never be asked at all.
+  const RATE_WORD_MILESTONES = [25, 75];
+  const RATE_MAX_DISMISSALS = 3;
+  const RATE_GAP_MS = 7 * 24 * 60 * 60 * 1000;
+  const RATE_DEFAULT = { rated: false, dismissals: 0, lastShown: 0 };
+
+  function maybeShowRateHint(wordCount, popupElAtSaveTime) {
+    if (!RATE_WORD_MILESTONES.includes(wordCount)) return;
+    chrome.storage.local.get({ sanojaRatePrompt: RATE_DEFAULT }, ({ sanojaRatePrompt }) => {
+      const state = sanojaRatePrompt;
+      if (state.rated || state.dismissals >= RATE_MAX_DISMISSALS || Date.now() - state.lastShown < RATE_GAP_MS) return;
+      if (popupEl !== popupElAtSaveTime || !popupEl) return;
+      chrome.storage.local.set({ sanojaRatePrompt: { ...state, lastShown: Date.now() } });
+
+      const hint = document.createElement("div");
+      hint.className = "sanoja-hint";
+      hint.append(`That's ${wordCount} words saved. `);
+      const link = document.createElement("a");
+      link.className = "sanoja-rate-link";
+      link.href = CWS_REVIEW_URL;
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = "Rate Sanoja →";
+      link.addEventListener("click", (e) => {
+        e.stopPropagation();
+        chrome.storage.local.set({ sanojaRatePrompt: { ...state, lastShown: Date.now(), rated: true } });
+      });
+      hint.appendChild(link);
+      popupEl.appendChild(hint);
+    });
+  }
+
   function saveWord(finnish, english, context, contextTranslation, baseForm) {
     const key = finnish.trim().toLowerCase();
     if (!key) return;
+    const popupAtSave = popupEl;
     chrome.storage.local.get({ sanojaWords: {} }, ({ sanojaWords }) => {
       const now = new Date().toISOString();
       const existing = sanojaWords[key];
@@ -473,6 +514,7 @@
         baseFormMeaning: baseForm ? baseForm.meaning : (existing && existing.baseFormMeaning) || "",
       };
       chrome.storage.local.set({ sanojaWords });
+      if (!existing) maybeShowRateHint(Object.keys(sanojaWords).length, popupAtSave);
     });
   }
 

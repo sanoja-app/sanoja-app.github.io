@@ -7,6 +7,26 @@ const phoneBtn = document.getElementById("phoneBtn");
 const phonePanel = document.getElementById("phonePanel");
 const phoneStatus = document.getElementById("phoneStatus");
 
+// Rating prompt rule, shared by popup.js, history.js and content.js (each
+// keeps its own copy because they don't share code): ask only people who've
+// saved enough words to know whether Sanoja helps them, never again once
+// they've clicked through to rate, at most once a week, and never after
+// three "Not now"s. State lives in chrome.storage.local.sanojaRatePrompt.
+const CWS_REVIEW_URL = "https://chromewebstore.google.com/detail/sanoja-read-words-in-finn/eoiodkapeakjcapimphbcjmijddaadjk/reviews";
+const RATE_MIN_WORDS = 15;
+const RATE_MAX_DISMISSALS = 3;
+const RATE_GAP_MS = 7 * 24 * 60 * 60 * 1000;
+const ratePrompt = document.getElementById("ratePrompt");
+
+function rateEligible(state, wordCount) {
+  return (
+    wordCount >= RATE_MIN_WORDS &&
+    !state.rated &&
+    state.dismissals < RATE_MAX_DISMISSALS &&
+    Date.now() - state.lastShown >= RATE_GAP_MS
+  );
+}
+
 const SYNC_ENDPOINT = "https://sanoja-uninstall-feedback.shahzainhtc.workers.dev/sync/";
 const FLASHCARDS_URL = "https://sanoja-app.github.io/flashcards.html";
 
@@ -88,8 +108,33 @@ phoneBtn.addEventListener("click", async () => {
   }
 });
 
-chrome.storage.local.get({ sanojaWords: {}, sanojaStreak: null }, ({ sanojaWords, sanojaStreak }) => {
+const RATE_DEFAULT = { rated: false, dismissals: 0, lastShown: 0 };
+
+document.getElementById("rateYes").addEventListener("click", () => {
+  chrome.storage.local.get({ sanojaRatePrompt: RATE_DEFAULT }, ({ sanojaRatePrompt }) => {
+    chrome.storage.local.set({ sanojaRatePrompt: { ...sanojaRatePrompt, rated: true } });
+    chrome.tabs.create({ url: CWS_REVIEW_URL });
+  });
+});
+
+document.getElementById("rateNo").addEventListener("click", () => {
+  ratePrompt.hidden = true;
+  chrome.storage.local.get({ sanojaRatePrompt: RATE_DEFAULT }, ({ sanojaRatePrompt }) => {
+    chrome.storage.local.set({
+      sanojaRatePrompt: { ...sanojaRatePrompt, dismissals: sanojaRatePrompt.dismissals + 1, lastShown: Date.now() },
+    });
+  });
+});
+
+chrome.storage.local.get({ sanojaWords: {}, sanojaStreak: null, sanojaRatePrompt: RATE_DEFAULT }, ({ sanojaWords, sanojaStreak, sanojaRatePrompt }) => {
   const words = Object.values(sanojaWords);
+  // Stays up (without counting as "shown") until answered: the popup closes
+  // whenever focus leaves it, so a glance shouldn't use up a week.
+  if (rateEligible(sanojaRatePrompt, words.length)) {
+    document.getElementById("rateText").textContent =
+      `You've saved ${words.length} words with Sanoja. A quick rating helps other learners find it.`;
+    ratePrompt.hidden = false;
+  }
   const now = new Date();
   const dueCount = words.filter((w) => !w.mastered && (!w.nextReview || new Date(w.nextReview) <= now)).length;
   const masteredCount = words.filter((w) => w.mastered).length;
