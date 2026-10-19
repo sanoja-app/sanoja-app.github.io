@@ -49,10 +49,10 @@ async function sendNotificationPush(env, reason, message) {
 // ---------------------------------------------------------------------------
 // Slack alerts
 //
-// Two incoming webhooks, one per channel (Slack ties each webhook to a
-// single channel): SLACK_WEBHOOK_LIVE -> #sanoja-live for installs,
-// uninstalls and survey answers; SLACK_WEBHOOK_ALERTS -> #sanoja-alerts for
-// errors. Either secret missing just means that kind of message is skipped.
+// Two webhook secrets, so installs/uninstalls/survey answers
+// (SLACK_WEBHOOK_LIVE) and errors (SLACK_WEBHOOK_ALERTS) can go to different
+// channels. Today both hold the same #sanoja-hq webhook. Either secret
+// missing just means that kind of message is skipped.
 //
 // Everything goes through AlertGate (a single Durable Object) first. It is
 // the one place with consistent counters, which KV can't give (KV is

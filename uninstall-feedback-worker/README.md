@@ -4,11 +4,11 @@ One Worker does four jobs:
 
 | Route | Who calls it | What happens |
 |---|---|---|
-| `POST /` | uninstall survey page (`docs/uninstall.html`) | saves the answer to KV, pings Telegram (optional) and Slack `#sanoja-live` |
+| `POST /` | uninstall survey page (`docs/uninstall.html`) | saves the answer to KV, pings Telegram (optional) and Slack `#sanoja-hq` |
 | `PUT/GET /sync/<id>` | "Practice on phone" | word-list sync, unchanged |
-| `POST /event` | extension, once per install | Slack `#sanoja-live`: install |
-| `GET /bye` | Chrome, when Sanoja is uninstalled (`setUninstallURL`) | Slack `#sanoja-live`: uninstall, then 302 to the survey page |
-| `POST /error` | extension, when something breaks | counted, Slack `#sanoja-alerts` on new errors and spikes |
+| `POST /event` | extension, once per install | Slack `#sanoja-hq`: install |
+| `GET /bye` | Chrome, when Sanoja is uninstalled (`setUninstallURL`) | Slack `#sanoja-hq`: uninstall, then 302 to the survey page |
+| `POST /error` | extension, when something breaks | counted, Slack `#sanoja-hq` on new errors and spikes |
 | `GET /?token=` | you | all survey answers as JSON, newest first |
 
 The extension already has host permission for this Worker (phone sync), so
@@ -18,13 +18,12 @@ re-approval prompt on update.
 ## What lands in Slack
 
 ```
-#sanoja-live
+#sanoja-hq
 🟢 New install · v2.5.0 · Chrome 141 · UI fi · `e95d63e7`
 🔴 Uninstall · v2.5.0 · kept 3 days · `e95d63e7`
 📝 Uninstall survey · Translations weren't accurate · `e95d63e7`
    > wrong words for compound nouns
 
-#sanoja-alerts
 ⚠️ New error in `translate` · v2.5.0 · Chrome 141
    > Translate request failed: 429
 🔥 Error spike in `translate` · 50 reports from 12 users this hour · v2.5.0 · Chrome 141
@@ -37,7 +36,7 @@ answer. Unpacked or dev builds show up prefixed `[dev]`.
 Noise limits (all in `worker.js`, top of the Slack section):
 - An install ID posts once, even if the ping is retried. Uninstalls are deduped the same way.
 - An error alerts the first time it's seen (and again after a quiet 24 h), then only when its count within one clock hour reaches 10, 50, 200 or 1000.
-- At most 60 `#sanoja-live` and 20 `#sanoja-alerts` messages an hour. Past that, messages are dropped.
+- At most 60 install/uninstall/survey messages and 20 error alerts an hour. Past that, messages are dropped.
 - The extension itself sends at most 3 reports of the same error, and 10 in total, per user per hour, and none while offline.
 
 The counters live in `AlertGate`, a Durable Object. It's included in the
@@ -47,10 +46,12 @@ Workers Free plan, and unlike KV it counts reliably.
 
 ### 1. Slack channels and webhooks
 
-1. In Slack ("Shahzain's Workspace"), create channels `#sanoja-live` and `#sanoja-alerts`.
+Everything posts to one private channel, `#sanoja-hq` in "Shahzain's Workspace", through the Slack app "Claude Sanoja" (formerly "Sanoja"). It's already set up. The steps below are only for redoing it.
+
+1. Create the private channel `#sanoja-hq` (it was `#sanoja-live`, renamed).
 2. Go to https://api.slack.com/apps and either open the existing **Job Loop** app or **Create New App → From scratch** (e.g. "Sanoja"). A separate app keeps the Sanoja webhooks easy to revoke on their own.
-3. **Incoming Webhooks** → turn on → **Add New Webhook to Workspace** → pick `#sanoja-live` → Allow. Copy the URL.
-4. Repeat for `#sanoja-alerts`. Each webhook is tied to one channel, so that makes two URLs.
+3. **Incoming Webhooks** → turn on → **Add New Webhook to Workspace** → pick `#sanoja-hq` → Allow. Copy the URL.
+4. Use that one URL for both secrets below. (The code keeps two secrets so errors could move to their own channel later.)
 
 ### 2. Deploy
 
@@ -58,8 +59,8 @@ From this folder, logged in to Cloudflare (`npx wrangler login` opens a browser 
 
 ```bash
 cd ~/Desktop/sanoja-finnish-word-reader/uninstall-feedback-worker
-npx wrangler secret put SLACK_WEBHOOK_LIVE      # paste the #sanoja-live URL
-npx wrangler secret put SLACK_WEBHOOK_ALERTS    # paste the #sanoja-alerts URL
+npx wrangler secret put SLACK_WEBHOOK_LIVE      # paste the #sanoja-hq URL
+npx wrangler secret put SLACK_WEBHOOK_ALERTS    # paste the same #sanoja-hq URL
 npx wrangler deploy
 ```
 
@@ -110,9 +111,9 @@ Automated, already run on this branch:
 - `tests/smoke.mjs`: 31 passed, 0 failed (no regression in translate, speak or save).
 
 Manual, after you deploy (about 5 minutes):
-1. `chrome://extensions` → Developer mode → **Load unpacked** this repo folder. `#sanoja-live` should show `[dev] 🟢 New install` within seconds.
-2. Open the service worker console ("Inspect views: service worker") and run `reportError("test", new Error("hello from devtools"))`. `#sanoja-alerts` should show `[dev] ⚠️ New error in test`.
-3. Click **Remove** on the extension. `#sanoja-live` should show `[dev] 🔴 Uninstall · kept less than a day`, and the survey page should open. Answer it, and `📝 Uninstall survey` should appear with the same code.
+1. `chrome://extensions` → Developer mode → **Load unpacked** this repo folder. `#sanoja-hq` should show `[dev] 🟢 New install` within seconds.
+2. Open the service worker console ("Inspect views: service worker") and run `reportError("test", new Error("hello from devtools"))`. `#sanoja-hq` should show `[dev] ⚠️ New error in test`.
+3. Click **Remove** on the extension. `#sanoja-hq` should show `[dev] 🔴 Uninstall · kept less than a day`, and the survey page should open. Answer it, and `📝 Uninstall survey` should appear with the same code.
 4. Optional: `curl -X POST https://sanoja-uninstall-feedback.shahzainhtc.workers.dev/event -d '{}'` → 403 (proves outsiders can't post installs without an extension origin).
 
 If nothing arrives: `npx wrangler tail` shows live Worker logs. Check the secret names match exactly.
